@@ -249,6 +249,7 @@ type Schedule struct {
 func TeamInit() map[string]string {
 
 	teamMap := make(map[string]string)
+	teamMap["Atlanta Hawks"] = "老鷹"
 	teamMap["Boston Celtics"] = "提克"
 	teamMap["Brooklyn Nets"] = "籃網"
 	teamMap["Cleveland Cavaliers"] = "騎士"
@@ -261,6 +262,7 @@ func TeamInit() map[string]string {
 	teamMap["Houston Rockets"] = "火箭"
 	teamMap["Indiana Pacers"] = "溜馬"
 	teamMap["Los Angeles Lakers"] = "湖人"
+	teamMap["LA Clippers"] = "快艇"
 	teamMap["Memphis Grizzlies"] = "灰熊"
 	teamMap["Miami Heat"] = "熱火"
 	teamMap["Milwaukee Bucks"] = "公鹿"
@@ -329,7 +331,7 @@ func getInjury(searchTeam string) (result []string) {
 
 }
 
-//取得Injury的comment 
+//取得Injury的comment
 func GetInjuryComment(searchTeam string) (result string) {
 
 	if searchTeam == "Los Angeles Clippers" {
