@@ -3,12 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -245,7 +248,198 @@ type Schedule struct {
 	Timestamp string `json:"timestamp"`
 }
 
-//把隊伍存進map
+type Game struct {
+	Profile struct {
+		ArenaLocation string      `json:"arenaLocation"`
+		ArenaName     string      `json:"arenaName"`
+		AwayTeamID    string      `json:"awayTeamId"`
+		DateTimeEt    string      `json:"dateTimeEt"`
+		GameID        string      `json:"gameId"`
+		HomeTeamID    string      `json:"homeTeamId"`
+		Number        string      `json:"number"`
+		ScheduleCode  interface{} `json:"scheduleCode"`
+		SeasonType    string      `json:"seasonType"`
+		Sequence      string      `json:"sequence"`
+		UtcMillis     string      `json:"utcMillis"`
+	} `json:"profile"`
+	Boxscore struct {
+		Attendance            string      `json:"attendance"`
+		AwayScore             int         `json:"awayScore"`
+		GameLength            interface{} `json:"gameLength"`
+		HomeScore             int         `json:"homeScore"`
+		LeadChanges           interface{} `json:"leadChanges"`
+		OfficialsDisplayName1 interface{} `json:"officialsDisplayName1"`
+		OfficialsDisplayName2 interface{} `json:"officialsDisplayName2"`
+		OfficialsDisplayName3 interface{} `json:"officialsDisplayName3"`
+		Period                string      `json:"period"`
+		PeriodClock           interface{} `json:"periodClock"`
+		Status                string      `json:"status"`
+		StatusDesc            interface{} `json:"statusDesc"`
+		Ties                  interface{} `json:"ties"`
+	} `json:"boxscore"`
+	Urls         []interface{} `json:"urls"`
+	Broadcasters []interface{} `json:"broadcasters"`
+	HomeTeam     struct {
+		Profile struct {
+			Abbr              string `json:"abbr"`
+			City              string `json:"city"`
+			CityEn            string `json:"cityEn"`
+			Code              string `json:"code"`
+			Conference        string `json:"conference"`
+			DisplayAbbr       string `json:"displayAbbr"`
+			DisplayConference string `json:"displayConference"`
+			Division          string `json:"division"`
+			ID                string `json:"id"`
+			IsAllStarTeam     bool   `json:"isAllStarTeam"`
+			IsLeagueTeam      bool   `json:"isLeagueTeam"`
+			LeagueID          string `json:"leagueId"`
+			Name              string `json:"name"`
+			NameEn            string `json:"nameEn"`
+		} `json:"profile"`
+		Matchup struct {
+			ConfRank   string      `json:"confRank"`
+			DivRank    string      `json:"divRank"`
+			Losses     string      `json:"losses"`
+			SeriesText interface{} `json:"seriesText"`
+			Wins       string      `json:"wins"`
+		} `json:"matchup"`
+		Score struct {
+			Assists                int     `json:"assists"`
+			BiggestLead            int     `json:"biggestLead"`
+			Blocks                 int     `json:"blocks"`
+			BlocksAgainst          int     `json:"blocksAgainst"`
+			DefRebs                int     `json:"defRebs"`
+			Disqualifications      int     `json:"disqualifications"`
+			Ejections              int     `json:"ejections"`
+			FastBreakPoints        int     `json:"fastBreakPoints"`
+			Fga                    int     `json:"fga"`
+			Fgm                    int     `json:"fgm"`
+			Fgpct                  float64 `json:"fgpct"`
+			FlagrantFouls          int     `json:"flagrantFouls"`
+			Fouls                  int     `json:"fouls"`
+			Fta                    int     `json:"fta"`
+			Ftm                    int     `json:"ftm"`
+			Ftpct                  float64 `json:"ftpct"`
+			FullTimeoutsRemaining  int     `json:"fullTimeoutsRemaining"`
+			Mins                   int     `json:"mins"`
+			OffRebs                int     `json:"offRebs"`
+			Ot10Score              int     `json:"ot10Score"`
+			Ot1Score               int     `json:"ot1Score"`
+			Ot2Score               int     `json:"ot2Score"`
+			Ot3Score               int     `json:"ot3Score"`
+			Ot4Score               int     `json:"ot4Score"`
+			Ot5Score               int     `json:"ot5Score"`
+			Ot6Score               int     `json:"ot6Score"`
+			Ot7Score               int     `json:"ot7Score"`
+			Ot8Score               int     `json:"ot8Score"`
+			Ot9Score               int     `json:"ot9Score"`
+			PointsInPaint          int     `json:"pointsInPaint"`
+			PointsOffTurnovers     int     `json:"pointsOffTurnovers"`
+			Q1Score                int     `json:"q1Score"`
+			Q2Score                int     `json:"q2Score"`
+			Q3Score                int     `json:"q3Score"`
+			Q4Score                int     `json:"q4Score"`
+			Rebs                   int     `json:"rebs"`
+			Score                  int     `json:"score"`
+			Seconds                int     `json:"seconds"`
+			ShortTimeoutsRemaining int     `json:"shortTimeoutsRemaining"`
+			Steals                 int     `json:"steals"`
+			TechnicalFouls         int     `json:"technicalFouls"`
+			Tpa                    int     `json:"tpa"`
+			Tpm                    int     `json:"tpm"`
+			Tppct                  float64 `json:"tppct"`
+			Turnovers              int     `json:"turnovers"`
+		} `json:"score"`
+		PointGameLeader   interface{} `json:"pointGameLeader"`
+		AssistGameLeader  interface{} `json:"assistGameLeader"`
+		ReboundGameLeader interface{} `json:"reboundGameLeader"`
+	} `json:"homeTeam"`
+	AwayTeam struct {
+		Profile struct {
+			Abbr              string `json:"abbr"`
+			City              string `json:"city"`
+			CityEn            string `json:"cityEn"`
+			Code              string `json:"code"`
+			Conference        string `json:"conference"`
+			DisplayAbbr       string `json:"displayAbbr"`
+			DisplayConference string `json:"displayConference"`
+			Division          string `json:"division"`
+			ID                string `json:"id"`
+			IsAllStarTeam     bool   `json:"isAllStarTeam"`
+			IsLeagueTeam      bool   `json:"isLeagueTeam"`
+			LeagueID          string `json:"leagueId"`
+			Name              string `json:"name"`
+			NameEn            string `json:"nameEn"`
+		} `json:"profile"`
+		Matchup struct {
+			ConfRank   string      `json:"confRank"`
+			DivRank    string      `json:"divRank"`
+			Losses     string      `json:"losses"`
+			SeriesText interface{} `json:"seriesText"`
+			Wins       string      `json:"wins"`
+		} `json:"matchup"`
+		Score struct {
+			Assists                int     `json:"assists"`
+			BiggestLead            int     `json:"biggestLead"`
+			Blocks                 int     `json:"blocks"`
+			BlocksAgainst          int     `json:"blocksAgainst"`
+			DefRebs                int     `json:"defRebs"`
+			Disqualifications      int     `json:"disqualifications"`
+			Ejections              int     `json:"ejections"`
+			FastBreakPoints        int     `json:"fastBreakPoints"`
+			Fga                    int     `json:"fga"`
+			Fgm                    int     `json:"fgm"`
+			Fgpct                  float64 `json:"fgpct"`
+			FlagrantFouls          int     `json:"flagrantFouls"`
+			Fouls                  int     `json:"fouls"`
+			Fta                    int     `json:"fta"`
+			Ftm                    int     `json:"ftm"`
+			Ftpct                  float64 `json:"ftpct"`
+			FullTimeoutsRemaining  int     `json:"fullTimeoutsRemaining"`
+			Mins                   int     `json:"mins"`
+			OffRebs                int     `json:"offRebs"`
+			Ot10Score              int     `json:"ot10Score"`
+			Ot1Score               int     `json:"ot1Score"`
+			Ot2Score               int     `json:"ot2Score"`
+			Ot3Score               int     `json:"ot3Score"`
+			Ot4Score               int     `json:"ot4Score"`
+			Ot5Score               int     `json:"ot5Score"`
+			Ot6Score               int     `json:"ot6Score"`
+			Ot7Score               int     `json:"ot7Score"`
+			Ot8Score               int     `json:"ot8Score"`
+			Ot9Score               int     `json:"ot9Score"`
+			PointsInPaint          int     `json:"pointsInPaint"`
+			PointsOffTurnovers     int     `json:"pointsOffTurnovers"`
+			Q1Score                int     `json:"q1Score"`
+			Q2Score                int     `json:"q2Score"`
+			Q3Score                int     `json:"q3Score"`
+			Q4Score                int     `json:"q4Score"`
+			Rebs                   int     `json:"rebs"`
+			Score                  int     `json:"score"`
+			Seconds                int     `json:"seconds"`
+			ShortTimeoutsRemaining int     `json:"shortTimeoutsRemaining"`
+			Steals                 int     `json:"steals"`
+			TechnicalFouls         int     `json:"technicalFouls"`
+			Tpa                    int     `json:"tpa"`
+			Tpm                    int     `json:"tpm"`
+			Tppct                  float64 `json:"tppct"`
+			Turnovers              int     `json:"turnovers"`
+		} `json:"score"`
+		PointGameLeader   interface{} `json:"pointGameLeader"`
+		AssistGameLeader  interface{} `json:"assistGameLeader"`
+		ReboundGameLeader interface{} `json:"reboundGameLeader"`
+	} `json:"awayTeam"`
+	IfNecessary bool        `json:"ifNecessary"`
+	SeriesText  interface{} `json:"seriesText"`
+}
+
+// GameResult 用于存储和排序比赛信息// GameInfo 用于存储和排序比赛信息
+type GameInfo struct {
+	Description string
+	GameTime    time.Time
+}
+
+// 把隊伍存進map
 func TeamInit() map[string]string {
 
 	teamMap := make(map[string]string)
@@ -283,11 +477,19 @@ func TeamInit() map[string]string {
 	return teamMap
 }
 
-//Get the injuriers of the nba team
+// Get the injuriers of the nba team
 func getInjury(searchTeam string) (result []string) {
 
 	if searchTeam == "Los Angeles Clippers" {
 		searchTeam = "LA Clippers"
+	}
+
+	if searchTeam == "Los Angeles Clippers" {
+		searchTeam = "LA Clippers"
+	}
+
+	if searchTeam == "Portland Trail_blazers" {
+		searchTeam = "Portland Trail Blazers"
 	}
 
 	res, err := http.Get("https://www.espn.com/nba/injuries")
@@ -331,11 +533,17 @@ func getInjury(searchTeam string) (result []string) {
 
 }
 
-//取得Injury的comment
+// 取得Injury的comment
 func GetInjuryComment(searchTeam string) (result string) {
+
+	foundInjuries := false
 
 	if searchTeam == "Los Angeles Clippers" {
 		searchTeam = "LA Clippers"
+	}
+
+	if searchTeam == "Portland Trail_blazers" {
+		searchTeam = "Portland Trail Blazers"
 	}
 
 	res, err := http.Get("https://www.espn.com/nba/injuries")
@@ -360,15 +568,16 @@ func GetInjuryComment(searchTeam string) (result string) {
 		team := s.Find(".injuries__teamName").Text()
 
 		if strings.EqualFold(team, searchTeam) {
-			result = result + teamMap[searchTeam] + "--"
-			s.Find(".Table__even").Each((func(ii int, g *goquery.Selection) {
 
+			result = result + teamMap[searchTeam] + "--"
+
+			s.Find(".Table__even").Each((func(ii int, g *goquery.Selection) {
 				name := g.Find(".AnchorLink").Text()
 				status := g.Find(".col-stat").Text()
 				comment := g.Find(".col-desc").Text()
 
 				if status != "" {
-
+					foundInjuries = true
 					commentResult := sortComment(name, comment)
 					result = result + commentResult
 
@@ -378,10 +587,14 @@ func GetInjuryComment(searchTeam string) (result string) {
 		}
 	})
 
+	if !foundInjuries {
+		result = result + teamMap[searchTeam] + "-全陣容 /"
+	}
+
 	return result
 }
 
-//comment 分類
+// comment 分類
 func sortComment(name, comment string) (result string) {
 	switch {
 	case strings.Contains(comment, "out"):
@@ -407,111 +620,131 @@ func sortComment(name, comment string) (result string) {
 	return result
 }
 
-//Get the nba game of the day
 func PKTeam() {
 	startTime := time.Now()
-	//轉成UTC-4
+
+	// 轉換時區到 UTC-4
 	zone := time.FixedZone("", -4*60*60)
 	today := time.Now()
 	newTime := today.In(zone).Format("2006-01-02")
 
-	//get data api url
+	// 獲取數據 API URL
 	url := "https://in.global.nba.com/stats2/scores/daily.json?gameDate=" + newTime + "&locale=en&tz=%2B8&countryCode=TW#"
-	// fmt.Println(url)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
-
 	defer resp.Body.Close()
 
-	var (
-		result                           Schedule
-		HomeTeamComment, AwayTeamComment string
-	)
-
-	body, err := ioutil.ReadAll(resp.Body)
+	var result Schedule
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
-
 	if unmarshalErr := json.Unmarshal(body, &result); unmarshalErr != nil {
 		panic(unmarshalErr)
 	}
 
-	var msg string
-	var commentMsg string
-	var layout string = "2006-01-02T15:04"
-	teamMap := TeamInit()
 	if result.Payload.Date.GameCount == "" {
-		msg = msg + "今天 " + newTime + " 沒有比賽 \n"
-		fmt.Println(msg)
+		fmt.Println("今天", newTime, "沒有比賽")
 		fmt.Println("Spend Time:", time.Since(startTime))
 		return
 	}
-	msg = msg + "今天 " + newTime + " 有 " + result.Payload.Date.GameCount + " 場比賽 \n"
 
-	for i, v := range result.Payload.Date.Games {
+	var wg sync.WaitGroup
+	gameInfoChan := make(chan GameInfo, len(result.Payload.Date.Games))
+	commentChan := make(chan string, len(result.Payload.Date.Games))
 
-		t, _ := time.Parse(layout, v.Profile.DateTimeEt)
+	for _, game := range result.Payload.Date.Games {
+		wg.Add(1)
+		go func(g Game) {
+			defer wg.Done()
+			gameInfo := processGame(g)
+			gameInfoChan <- gameInfo
 
-		if v.AwayTeam.Profile.Name == "Clippers" {
-			v.AwayTeam.Profile.City = "Los Angeles"
-		}
-
-		if v.HomeTeam.Profile.Name == "Clippers" {
-			v.HomeTeam.Profile.City = "Los Angeles"
-		}
-
-		AwayTeam := v.AwayTeam.Profile.City + " " + v.AwayTeam.Profile.Name
-		HomeTeam := v.HomeTeam.Profile.City + " " + v.HomeTeam.Profile.Name
-
-		AwayTeamInjury := getInjury(AwayTeam)
-		HomeTeamInjury := getInjury(HomeTeam)
-
-		msg = msg + fmt.Sprint(i+1) + ". " + AwayTeam + "  " + t.Add(time.Hour*13).Format("15:04") + "  " + HomeTeam + "(主)  " + "\n"
-
-		msg = msg + "\n  ---------------------------------\n"
-		msg = msg + "  " + AwayTeam + " injury 名單 \n"
-
-		if len(AwayTeamInjury) == 0 {
-			msg = msg + "  沒有傷兵\n\n"
-			commentMsg = commentMsg + teamMap[AwayTeam] + "-全陣容 /"
-		} else {
-			for _, v := range AwayTeamInjury {
-				msg = msg + "  " + v + "\n"
-			}
-			commentMsg = commentMsg + GetInjuryComment(AwayTeam) + "; "
-		}
-
-		msg = msg + "\n  ---------------------------------\n"
-
-		msg = msg + "  " + HomeTeam + " injury 名單 \n"
-		if len(HomeTeamInjury) == 0 {
-			msg = msg + "  沒有傷兵\n\n"
-			commentMsg = commentMsg + teamMap[HomeTeam] + "-全陣容"
-		} else {
-			for _, v := range HomeTeamInjury {
-				msg = msg + "  " + v + "\n"
-			}
-			commentMsg = commentMsg + GetInjuryComment(HomeTeam)
-			msg = msg + "\n"
-		}
-
-		AwayTeamDish := getDish(AwayTeam)
-		HomeTeamDish := getDish(HomeTeam)
-
-		msg = msg + "  " + AwayTeam + " 近期過盤狀況: " + AwayTeamDish[AwayTeam] + "\n"
-		msg = msg + "  " + HomeTeam + " 近期過盤狀況: " + HomeTeamDish[HomeTeam] + "\n\n"
-		commentMsg = commentMsg + AwayTeamComment + "   " + HomeTeamComment + "\n\n"
-
+			// 獲取傷病評論
+			comment := GetInjuryComment(g.HomeTeam.Profile.City + " " + g.HomeTeam.Profile.Name)
+			comment += " / " + GetInjuryComment(g.AwayTeam.Profile.City+" "+g.AwayTeam.Profile.Name)
+			commentChan <- comment
+		}(game)
 	}
-	fmt.Println(commentMsg)
-	fmt.Println(msg)
+
+	wg.Wait()
+	close(gameInfoChan)
+	close(commentChan)
+
+	var gameInfos []GameInfo
+	for gi := range gameInfoChan {
+		gameInfos = append(gameInfos, gi)
+	}
+
+	// 按比賽時間排序
+	sort.Slice(gameInfos, func(i, j int) bool {
+		return gameInfos[i].GameTime.Before(gameInfos[j].GameTime)
+	})
+
+	// 打印排序後的比賽信息
+	fmt.Printf("今天 %s 有 %s 場比賽 \n", newTime, result.Payload.Date.GameCount)
+	for _, gi := range gameInfos {
+		fmt.Println(gi.Description)
+	}
+
+	var finalComments string
+	for comment := range commentChan {
+		finalComments += comment + "\n\n"
+	}
+	fmt.Println(finalComments)
+
 	fmt.Println("Spend Time:", time.Since(startTime))
 }
 
-//Get the nba game of the day , search by "StartTime"
+func processGame(game Game) GameInfo {
+	// 從 game 中提取比賽時間和球隊信息
+	layout := "2006-01-02T15:04"
+	gameTime, _ := time.Parse(layout, game.Profile.DateTimeEt)
+
+	gameTime = gameTime.Add(time.Hour * 13)
+
+	// 假設的 getInjury 和 getDish 函數
+	AwayTeamInjury := getInjury(game.AwayTeam.Profile.City + " " + game.AwayTeam.Profile.Name)
+	HomeTeamInjury := getInjury(game.HomeTeam.Profile.City + " " + game.HomeTeam.Profile.Name)
+	AwayTeamDish := getDish(game.AwayTeam.Profile.City + " " + game.AwayTeam.Profile.Name)
+	HomeTeamDish := getDish(game.HomeTeam.Profile.City + " " + game.HomeTeam.Profile.Name)
+
+	description := fmt.Sprintf(
+		"%s %s vs %s\n\n  ---------------------------------\n  %s injury 名單 \n%s\n\n  ---------------------------------\n  %s injury 名單 \n%s\n\n  %s 近期過盤狀況: %s\n  %s 近期過盤狀況: %s\n",
+		gameTime.Format("2006-01-02 15:04"),
+		game.AwayTeam.Profile.City+" "+game.AwayTeam.Profile.Name,
+		game.HomeTeam.Profile.City+" "+game.HomeTeam.Profile.Name,
+		game.AwayTeam.Profile.City+" "+game.AwayTeam.Profile.Name,
+		formatInjury(AwayTeamInjury),
+		game.HomeTeam.Profile.City+" "+game.HomeTeam.Profile.Name,
+		formatInjury(HomeTeamInjury),
+		game.AwayTeam.Profile.City+" "+game.AwayTeam.Profile.Name,
+		formatDish(AwayTeamDish, game.AwayTeam.Profile.City+" "+game.AwayTeam.Profile.Name),
+		game.HomeTeam.Profile.City+" "+game.HomeTeam.Profile.Name,
+		formatDish(HomeTeamDish, game.HomeTeam.Profile.City+" "+game.HomeTeam.Profile.Name))
+
+	return GameInfo{
+		Description: description,
+		GameTime:    gameTime,
+	}
+}
+
+// formatInjury 格式化傷病信息
+func formatInjury(injuries []string) string {
+	if len(injuries) == 0 {
+		return "  沒有傷兵\n"
+	}
+	formatted := "  "
+	for _, injury := range injuries {
+		formatted += injury + "\n  "
+	}
+	return formatted
+}
+
+// Get the nba game of the day , search by "StartTime"
 func PKTeamOnStartTime(st string) {
 	if len(st) != 5 {
 		fmt.Println("你輸入的時間" + st + "格式錯誤，eg: '11:00'(請用半形) ")
@@ -618,7 +851,7 @@ func PKTeamOnStartTime(st string) {
 	fmt.Println("Spend Time:", time.Since(startTime))
 }
 
-//取得近五場輸贏盤口資訊
+// 取得近五場輸贏盤口資訊
 func getDish(searchTeam string) map[string]string {
 	var (
 		season string
@@ -636,6 +869,8 @@ func getDish(searchTeam string) map[string]string {
 
 	// http://nba.titan007.com/cn/LetGoal.aspx?SclassID=1&matchSeason=2022-2023
 	url := "https://nba.titan007.com/jsData/letGoal/" + season + "/l1.js?version=" + yearR
+
+	log.Println("URL: ", url)
 
 	res, err := http.Get(url)
 	if err != nil {
@@ -708,4 +943,12 @@ func changeWinLose(r string) (result string) {
 		result = "輸"
 	}
 	return
+}
+
+// formatDish 格式化過盤狀況信息
+func formatDish(dish map[string]string, team string) string {
+	if result, ok := dish[team]; ok {
+		return result
+	}
+	return "無可用數據"
 }

@@ -1,5 +1,8 @@
 package main
 
+import "example/scanNBA/nba"
+
 func main() {
-	PKTeam()
+	// PKTeam()
+	nba.GetNBATeams()
 }
