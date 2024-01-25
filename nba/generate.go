@@ -658,3 +658,9 @@ type NBATeam struct {
 	Zipcodes struct {
 	} `json:"zipcodes"`
 }
+
+// GameResult 用于存储和排序比赛信息// GameInfo 用于存储和排序比赛信息
+type GameInfo struct {
+	Description string
+	GameTime    time.Time
+}
