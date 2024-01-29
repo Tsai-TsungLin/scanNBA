@@ -13,40 +13,7 @@ import (
 type NBATeam2 struct {
 	Sports []struct {
 		Leagues []struct {
-			Events []struct {
-				Date        time.Time `json:"date"`
-				Competitors []struct {
-					DisplayName string `json:"displayName"`
-					HomeAway    string `json:"homeAway"`
-				} `json:"competitors"`
-				Odds struct {
-					OverUnder   float64 `json:"overUnder"`
-					PointSpread struct {
-						Away struct {
-							Open struct {
-								Line string `json:"line"`
-							} `json:"open"`
-							Close struct {
-								Line string `json:"line"`
-							} `json:"close"`
-						} `json:"away"`
-						Home struct {
-							Open struct {
-								Line string `json:"line"`
-							} `json:"open"`
-							Close struct {
-								Line string `json:"line"`
-							} `json:"close"`
-						} `json:"home"`
-					} `json:"pointSpread"`
-					AwayTeamOdds struct {
-						Favorite bool `json:"favorite"`
-					} `json:"awayTeamOdds"`
-					HomeTeamOdds struct {
-						Favorite bool `json:"favorite"`
-					} `json:"homeTeamOdds"`
-				} `json:"odds"`
-			} `json:"events"`
+			Events []Event `json:"events"`
 		} `json:"leagues"`
 	} `json:"sports"`
 }
@@ -67,6 +34,9 @@ type Event struct {
 				Close struct {
 					Line string `json:"line"`
 				} `json:"close"`
+				Current struct {
+					Line string `json:"line"`
+				} `json:"current"`
 			} `json:"away"`
 			Home struct {
 				Open struct {
@@ -75,6 +45,9 @@ type Event struct {
 				Close struct {
 					Line string `json:"line"`
 				} `json:"close"`
+				Current struct {
+					Line string `json:"line"`
+				} `json:"current"`
 			} `json:"home"`
 		} `json:"pointSpread"`
 		AwayTeamOdds struct {
@@ -83,6 +56,19 @@ type Event struct {
 		HomeTeamOdds struct {
 			Favorite bool `json:"favorite"`
 		} `json:"homeTeamOdds"`
+		Total struct {
+			Over struct {
+				Current struct {
+					Line string `json:"line"`
+				} `json:"current"`
+				Open struct {
+					Line string `json:"line"`
+				} `json:"open"`
+				Close struct {
+					Line string `json:"line"`
+				} `json:"close"`
+			} `json:"over"`
+		} `json:"total"`
 	} `json:"odds"`
 }
 
@@ -174,10 +160,10 @@ func GetNBATeams() {
 					if event.Odds.PointSpread.Away.Open.Line != "" {
 						if event.Odds.AwayTeamOdds.Favorite {
 							// 如果客队是让分的队伍
-							oddsInfo = fmt.Sprintf("初盤 %s %s, 大小分: %.1f ", chineseTeam[awayTeam], event.Odds.PointSpread.Away.Open.Line, event.Odds.OverUnder)
+							oddsInfo = fmt.Sprintf("初盤 %s%s, 大小分: %s\n現在盤口 %s%s 大小分: %s", chineseTeam[awayTeam], event.Odds.PointSpread.Away.Open.Line, event.Odds.Total.Over.Open.Line[1:], chineseTeam[awayTeam], event.Odds.PointSpread.Away.Close.Line, event.Odds.Total.Over.Close.Line[1:])
 						} else if event.Odds.HomeTeamOdds.Favorite {
 							// 如果主队是让分的队伍
-							oddsInfo = fmt.Sprintf("初盤 %s %s, 大小分: %.1f ", chineseTeam[homeTeam], event.Odds.PointSpread.Home.Open.Line, event.Odds.OverUnder)
+							oddsInfo = fmt.Sprintf("初盤 %s %s, 大小分: %s\n現在盤口 %s%s 大小分: %s", chineseTeam[homeTeam], event.Odds.PointSpread.Home.Open.Line, event.Odds.Total.Over.Open.Line[1:], chineseTeam[homeTeam], event.Odds.PointSpread.Home.Close.Line, event.Odds.Total.Over.Close.Line[1:])
 						} else {
 							oddsInfo = "赔率信息不明确"
 						}

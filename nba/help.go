@@ -138,8 +138,6 @@ func getDish(searchTeam string) map[string]string {
 	// http://nba.titan007.com/cn/LetGoal.aspx?SclassID=1&matchSeason=2022-2023
 	url := "https://nba.titan007.com/jsData/letGoal/" + season + "/l1.js?version=" + yearR
 
-	log.Println("URL: ", url)
-
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
