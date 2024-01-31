@@ -84,7 +84,7 @@ function formatInjuryList(injuries) {
     }
 
     let injuryTable = '<table class="injury-table">';
-    injuryTable += '<tr><th>名稱</th><th>狀態</th></tr>'; // 表頭
+    injuryTable += '<tr><th>球員</th><th>狀態</th></tr>'; // 表頭
 
     injuries.forEach(injury => {
         let playerNameLink = `<a href="${injury.link}" target="_blank">${injury.name}</a>`;
