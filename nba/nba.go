@@ -173,15 +173,17 @@ func GetNBATeams() {
 
 					// 创建通道用于接收伤兵和盘口信息
 					infoChannel := make(chan TeamInfo, 2)
-
+					wg.Add(1) // 為getInjuryFetch增加計數
 					// 使用goroutine获取客队和主队的伤兵信息
 					go func(teamName string) {
+						defer wg.Done()
 						injuries := getInjury(teamName)
 						dish := getDish(teamName)
 						infoChannel <- TeamInfo{TeamName: teamName, Injuries: injuries, Dish: dish}
 					}(awayTeam)
-
+					wg.Add(1) // 為getInjuryFetch增加計數
 					go func(teamName string) {
+						defer wg.Done()
 						injuries := getInjury(teamName)
 						dish := getDish(teamName)
 						infoChannel <- TeamInfo{TeamName: teamName, Injuries: injuries, Dish: dish}
@@ -222,7 +224,7 @@ func GetNBATeams() {
 	sort.Slice(gameAll, func(i, j int) bool {
 		return gameAll[i].Date.Before(gameAll[j].Date)
 	})
-	fmt.Printf("今天 %s 有 %d 场比赛\n\n", dateOfGames.Format("2006-01-02"), len(gameAll))
+	fmt.Printf("今天 %s 有 %d 場比赛\n\n", dateOfGames.Format("2006-01-02"), len(gameAll))
 	// 输出排序后的比赛信息
 	for i, game := range gameAll {
 		fmt.Printf("%d. %s\n", i+1, game.Info)

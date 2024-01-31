@@ -13,50 +13,10 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// 把隊伍存進map
-func TeamInit() map[string]string {
-
-	teamMap := make(map[string]string)
-	teamMap["Atlanta Hawks"] = "老鷹"
-	teamMap["Boston Celtics"] = "提克"
-	teamMap["Brooklyn Nets"] = "籃網"
-	teamMap["Cleveland Cavaliers"] = "騎士"
-	teamMap["Charlotte Hornets"] = "黃蜂"
-	teamMap["Chicago Bulls"] = "公牛"
-	teamMap["Dallas Mavericks"] = "小牛"
-	teamMap["Denver Nuggets"] = "金塊"
-	teamMap["Detroit Pistons"] = "活塞"
-	teamMap["Golden State Warriors"] = "勇士"
-	teamMap["Houston Rockets"] = "火箭"
-	teamMap["Indiana Pacers"] = "溜馬"
-	teamMap["Los Angeles Lakers"] = "湖人"
-	teamMap["LA Clippers"] = "快艇"
-	teamMap["Memphis Grizzlies"] = "灰熊"
-	teamMap["Miami Heat"] = "熱火"
-	teamMap["Milwaukee Bucks"] = "公鹿"
-	teamMap["Minnesota Timberwolves"] = "灰狼"
-	teamMap["New Orleans Pelicans"] = "鵜鶘"
-	teamMap["New York Knicks"] = "尼克"
-	teamMap["Oklahoma City Thunder"] = "雷霆"
-	teamMap["Orlando Magic"] = "魔術"
-	teamMap["Philadelphia 76ers"] = "76人"
-	teamMap["Phoenix Suns"] = "太陽"
-	teamMap["Portland Trail Blazers"] = "拓荒"
-	teamMap["Sacramento Kings"] = "國王"
-	teamMap["San Antonio Spurs"] = "馬刺"
-	teamMap["Toronto Raptors"] = "暴龍"
-	teamMap["Utah Jazz"] = "爵士"
-	teamMap["Washington Wizards"] = "巫師"
-
-	return teamMap
-}
-
 // Get the injuriers of the nba team
-func getInjury(searchTeam string) (result []string) {
+func getInjuryFetch(searchTeam string) []map[string]string {
 
-	if searchTeam == "Los Angeles Clippers" {
-		searchTeam = "LA Clippers"
-	}
+	var results []map[string]string // 切片，存儲每個球員的信息
 
 	if searchTeam == "Los Angeles Clippers" {
 		searchTeam = "LA Clippers"
@@ -90,40 +50,52 @@ func getInjury(searchTeam string) (result []string) {
 			s.Find(".Table__even").Each((func(i int, g *goquery.Selection) {
 				name := g.Find(".AnchorLink").Text()
 				status := g.Find(".col-stat").Text()
-				comment := g.Find(".col-desc").Text()
+
+				link, exists := g.Find(".AnchorLink").Attr("href") // 提取 href 属性
+				if !exists {
+					link = "" // 如果 href 属性不存在，設置為空字符串
+				}
+
+				if status == "Day-To-Day" {
+					status = "GTD"
+				}
 
 				if status != "" {
+
 					name = fmt.Sprintf("%-25s", name)
 					status = fmt.Sprintf("%-15s", status)
-					comment = fmt.Sprintf("%-5s", comment)
-					injury := name + status + comment
-					result = append(result, injury)
+
+					player := map[string]string{
+						"name":   strings.TrimSpace(name),   // 移除多餘的空白
+						"status": strings.TrimSpace(status), // 移除多餘的空白
+						"link":   strings.TrimSpace(link),
+					}
+
+					// 將這個map添加到結果切片中
+					results = append(results, player)
+
 				}
 			}))
 		}
 	})
 
-	return result
+	return results
 
-}
-
-// formatInjury 格式化傷病信息
-func formatInjury(injuries []string) string {
-	if len(injuries) == 0 {
-		return "  沒有傷兵\n"
-	}
-	formatted := "  "
-	for _, injury := range injuries {
-		formatted += injury + "\n  "
-	}
-	return formatted
 }
 
 // 取得近五場輸贏盤口資訊
-func getDish(searchTeam string) map[string]string {
+func getDishFetch(searchTeam string) []string {
 	var (
 		season string
 	)
+
+	if searchTeam == "LA Clippers" {
+		searchTeam = "Los Angeles Clippers"
+	}
+
+	// if searchTeam == "Portland Trail Blazers" {
+	// 	searchTeam = "Portland Trail_blazers"
+	// }
 
 	year := time.Now()
 	month := time.Now().Format("01")
@@ -161,7 +133,7 @@ func getDish(searchTeam string) map[string]string {
 	frontsideTeam := frontside.FindAllStringSubmatchIndex(string(Team), -1)
 
 	matchMap := make(map[int64]string)
-	result := make(map[string]string)
+	result := []string{}
 
 	for i := range frontsideTeam {
 		//把隊伍資料放進map，稍後用在拿勝率
@@ -194,29 +166,10 @@ func getDish(searchTeam string) map[string]string {
 			four := changeWinLose(winPercentData[matchR[14][0]+1 : matchR[15][1]-1])
 			five := changeWinLose(winPercentData[matchR[15][0]+1 : matchR[15][1]+1])
 
-			result[matchMap[TeamNumber]] = one + "," + two + "," + three + "," + four + "," + five
+			result = append(result, one, two, three, four, five)
 		}
 	}
 
 	return result
 
 }
-
-func changeWinLose(r string) (result string) {
-	if r == "0" {
-		result = "贏"
-	} else {
-		result = "輸"
-	}
-	return
-}
-
-// formatDish 格式化過盤狀況信息
-func formatDish(dish map[string]string, team string) string {
-	if result, ok := dish[team]; ok {
-		return result
-	}
-	return "無可用數據"
-}
-
-

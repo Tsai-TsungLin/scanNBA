@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.games-table,
+.injury-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.games-table th,
+.games-table td,
+.injury-table th,
+.injury-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.games-table th,
+.injury-table th {
+    background-color: #f2f2f2;
+}
+
+.games-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* 新增的樣式 */
+.status-gtd {
+    color: green;
+    /* GTD 狀態的顏色 */
+}
+
+.status-out {
+    color: red;
+    /* Out 狀態的顏色 */
+}
+
+.centered {
+    position: fixed;
+    /* 使用固定定位 */
+    top: 50%;
+    /* 顶部距离视口的50% */
+    left: 50%;
+    /* 左边距离视口的50% */
+    transform: translate(-50%, -50%);
+    /* 向左和向上移动50%的自身宽度和高度 */
+    z-index: 1000;
+    /* 确保它在页面上方 */
+    background-color: white;
+    /* 背景颜色 */
+    padding: 20px;
+    /* 内边距 */
+    border: 1px solid #ddd;
+    /* 边框 */
+    text-align: center;
+    /* 文字居中 */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+    /* 阴影效果 */
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.dot {
+    animation: blink 1.4s infinite;
+    animation-fill-mode: both;
+}
+
+#dot1 {
+    animation-delay: 0s;
+}
+
+#dot2 {
+    animation-delay: 0.2s;
+}
+
+#dot3 {
+    animation-delay: 0.4s;
+}
