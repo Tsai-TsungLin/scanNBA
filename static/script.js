@@ -3,10 +3,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorElement = document.getElementById('error');
     const gamesElement = document.getElementById('games');
 
-    // 增加篩選表單元素，先隱藏
     const filterForm = document.createElement('div');
     filterForm.id = 'filterForm';
-    filterForm.style.display = 'none'; // 初始隱藏篩選表單
+    filterForm.style.display = 'none';
     filterForm.innerHTML = `
         <label for="minOdds">最小受讓分:</label>
         <input type="number" id="minOdds" name="minOdds">
@@ -15,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function () {
     `;
     document.body.insertBefore(filterForm, gamesElement);
 
-    // 顯示加載狀態
     loadingElement.style.display = 'block';
     errorElement.style.display = 'none';
 
@@ -27,26 +25,22 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(gamesData => {
-            // 隱藏加載狀態
             loadingElement.style.display = 'none';
             renderGames(gamesData.matches);
-            // 資料載入成功後，顯示篩選表單
             filterForm.style.display = 'block';
-            setupFilterListeners(); // 設置篩選監聽
+            setupFilterListeners();
         })
         .catch(error => {
             console.error('Error fetching data: ', error);
-            // 顯示錯誤信息
             errorElement.textContent = `Error: ${error.message}`;
             errorElement.style.display = 'block';
-            // 隱藏加載狀態
             loadingElement.style.display = 'none';
         });
 });
 
 function renderGames(matches) {
     const gamesElement = document.getElementById('games');
-    gamesElement.innerHTML = ''; // 清空現有內容
+    gamesElement.innerHTML = '';
     const table = document.createElement('table');
     table.className = 'games-table';
     const thead = document.createElement('thead');
@@ -61,10 +55,10 @@ function renderGames(matches) {
             <th>目前大小分</th>
             <th>主隊大小分</th>
             <th>客隊大小分</th>
-            <th>客隊傷兵名單</th>
             <th>主隊傷兵名單</th>
-            <th>客隊近五場過盤</th>
+            <th>客隊傷兵名單</th>
             <th>主隊近五場過盤</th>
+            <th>客隊近五場過盤</th>
         </tr>`;
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
@@ -80,16 +74,25 @@ function renderGames(matches) {
             <td>${match.currentOverUnder}</td>
             <td>${match.homeOverUnder}</td>
             <td>${match.awayOverUnder}</td>
-            <td>${formatInjuryList(match.awayInjuries)}</td>
-            <td>${formatInjuryList(match.homeInjuries)}</td>
-            <td>${formatDishResult(match.awayDish)}</td>
+            <td>${formatInjuryList(match.homeInjuries, 'awayInjuryList' + match.homeTeam)}</td>
+            <td>${formatInjuryList(match.awayInjuries, 'homeInjuryList' + match.awayTeam)}</td>
             <td>${formatDishResult(match.homeDish)}</td>
+            <td>${formatDishResult(match.awayDish)}</td>
         `;
-        row.dataset.currentOdds = match.currentOdds;
         tbody.appendChild(row);
+        row.dataset.currentOdds = match.currentOdds;
     });
     table.appendChild(tbody);
     gamesElement.appendChild(table);
+}
+
+function toggleInjuryList(listId) { // 新增此函數
+    var element = document.getElementById(listId);
+    if (element.style.display === "none") {
+        element.style.display = "block";
+    } else {
+        element.style.display = "none";
+    }
 }
 
 // 篩選功能啟動時的函數
@@ -118,7 +121,6 @@ function filterGames() {
     const minOddsValue = document.getElementById('minOdds').value;
     const maxOddsValue = document.getElementById('maxOdds').value;
     const rows = document.querySelectorAll('#games tbody tr');
-
     rows.forEach(row => {
         if (row.dataset.currentOdds) {
             const currentOdds = parseFloat(row.dataset.currentOdds);
@@ -130,13 +132,15 @@ function filterGames() {
     });
 }
 
-function formatInjuryList(injuries) {
+function formatInjuryList(injuries, listId) {
     if (!injuries || injuries.length === 0) {
         return '無';
     }
 
-    let injuryTable = '<table class="injury-table">';
-    injuryTable += '<tr><th>球員</th><th>狀態</th></tr>'; // 表頭
+    let button = `<button onclick="toggleInjuryList('${listId}')">展開/收起</button>`; 
+    let injuryTable = `<div id="${listId}" style="display: none;">` ;
+    injuryTable += '<table class="injury-table">';
+    injuryTable += '<tr><th>球員</th><th>狀態</th></tr>';
 
     injuries.forEach(injury => {
         let playerNameLink = `<a href="${injury.link}" target="_blank">${injury.name}</a>`;
@@ -144,8 +148,8 @@ function formatInjuryList(injuries) {
         injuryTable += `<tr><td>${playerNameLink}</td><td class="${statusClass}">${injury.status}</td></tr>`;
     });
 
-    injuryTable += '</table>';
-    return injuryTable;
+    injuryTable += '</table></div>';
+    return button + injuryTable; // 返回按鈕和傷兵名單
 }
 
 function formatDishResult(dishResults) {
