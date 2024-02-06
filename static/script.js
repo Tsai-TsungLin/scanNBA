@@ -3,7 +3,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorElement = document.getElementById('error');
     const gamesElement = document.getElementById('games');
 
-    // 显示加载状态
+    // 增加篩選表單元素，先隱藏
+    const filterForm = document.createElement('div');
+    filterForm.id = 'filterForm';
+    filterForm.style.display = 'none'; // 初始隱藏篩選表單
+    filterForm.innerHTML = `
+        <label for="minOdds">最小受讓分:</label>
+        <input type="number" id="minOdds" name="minOdds">
+        <label for="maxOdds">最大受讓分:</label>
+        <input type="number" id="maxOdds" name="maxOdds">
+    `;
+    document.body.insertBefore(filterForm, gamesElement);
+
+    // 顯示加載狀態
     loadingElement.style.display = 'block';
     errorElement.style.display = 'none';
 
@@ -14,69 +26,109 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             return response.json();
         })
-        
         .then(gamesData => {
-            // 隐藏加载状态
+            // 隱藏加載狀態
             loadingElement.style.display = 'none';
-
-            const gamesElement = document.getElementById('games');
-
-            // 創建表格
-            const table = document.createElement('table');
-            table.className = 'games-table';
-
-            // 創建表頭
-            const thead = document.createElement('thead');
-            thead.innerHTML = `
-                <tr>
-                    <th>時間</th>
-                    <th>客隊</th>
-                    <th>主隊</th>
-                    <th>初盤受讓分</th>
-                    <th>初盤大小分</th>
-                    <th>目前受讓分</th>
-                    <th>目前大小分</th>
-                    <th>客隊傷兵名單</th>
-                    <th>主隊傷兵名單</th>
-                    <th>客隊近五場過盤</th>
-                    <th>主隊近五場過盤</th>
-                </tr>`;
-            table.appendChild(thead);
-
-            // 創建表身
-            const tbody = document.createElement('tbody');
-
-            gamesData.matches.forEach(match => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${match.time}</td>
-                    <td>${match.awayTeam}</td>
-                    <td>${match.homeTeam}</td>
-                    <td>${match.initialOdds}</td>
-                    <td>${match.initialOverUnder}</td>
-                    <td>${match.currentOdds}</td>
-                    <td>${match.currentOverUnder}</td>
-                    <td>${formatInjuryList(match.awayInjuries)}</td>
-                    <td>${formatInjuryList(match.homeInjuries)}</td>
-                    <td>${formatDishResult(match.awayDish)}</td>
-                    <td>${formatDishResult(match.homeDish)}</td>
-                `;
-                tbody.appendChild(row);
-            });
-
-            table.appendChild(tbody);
-            gamesElement.appendChild(table);
+            renderGames(gamesData.matches);
+            // 資料載入成功後，顯示篩選表單
+            filterForm.style.display = 'block';
+            setupFilterListeners(); // 設置篩選監聽
         })
         .catch(error => {
             console.error('Error fetching data: ', error);
-            // 显示错误信息
+            // 顯示錯誤信息
             errorElement.textContent = `Error: ${error.message}`;
             errorElement.style.display = 'block';
-            // 隐藏加载状态
+            // 隱藏加載狀態
             loadingElement.style.display = 'none';
         });
 });
 
+function renderGames(matches) {
+    const gamesElement = document.getElementById('games');
+    gamesElement.innerHTML = ''; // 清空現有內容
+    const table = document.createElement('table');
+    table.className = 'games-table';
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+        <tr>
+            <th>時間</th>
+            <th>主隊</th>
+            <th>客隊</th>
+            <th>初盤受讓分</th>
+            <th>初盤大小分</th>
+            <th>目前受讓分</th>
+            <th>目前大小分</th>
+            <th>主隊大小分</th>
+            <th>客隊大小分</th>
+            <th>客隊傷兵名單</th>
+            <th>主隊傷兵名單</th>
+            <th>客隊近五場過盤</th>
+            <th>主隊近五場過盤</th>
+        </tr>`;
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    matches.forEach(match => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${match.time}</td>
+            <td>${match.homeTeam}</td>
+            <td>${match.awayTeam}</td>
+            <td>${match.initialOdds}</td>
+            <td>${match.initialOverUnder}</td>
+            <td>${match.currentOdds}</td>
+            <td>${match.currentOverUnder}</td>
+            <td>${match.homeOverUnder}</td>
+            <td>${match.awayOverUnder}</td>
+            <td>${formatInjuryList(match.awayInjuries)}</td>
+            <td>${formatInjuryList(match.homeInjuries)}</td>
+            <td>${formatDishResult(match.awayDish)}</td>
+            <td>${formatDishResult(match.homeDish)}</td>
+        `;
+        row.dataset.currentOdds = match.currentOdds;
+        tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    gamesElement.appendChild(table);
+}
+
+// 篩選功能啟動時的函數
+function setupFilterListeners() {
+    const minOddsInput = document.getElementById('minOdds');
+    const maxOddsInput = document.getElementById('maxOdds');
+
+    // 監聽輸入變化，自動觸發篩選
+    minOddsInput.addEventListener('input', autoFilterGames);
+    maxOddsInput.addEventListener('input', autoFilterGames);
+}
+
+// 自動篩選函數，當兩個輸入框都有值時觸發篩選
+function autoFilterGames() {
+    const minOdds = document.getElementById('minOdds').value;
+    const maxOdds = document.getElementById('maxOdds').value;
+
+    // 當兩個輸入框都有值或都是空白時，進行篩選
+    if ((minOdds !== '' && maxOdds !== '') || (minOdds === '' && maxOdds === '')) {
+        filterGames();
+    }
+}
+
+// 篩選函數
+function filterGames() {
+    const minOddsValue = document.getElementById('minOdds').value;
+    const maxOddsValue = document.getElementById('maxOdds').value;
+    const rows = document.querySelectorAll('#games tbody tr');
+
+    rows.forEach(row => {
+        if (row.dataset.currentOdds) {
+            const currentOdds = parseFloat(row.dataset.currentOdds);
+            const displayRow = (!minOddsValue && !maxOddsValue) || // 兩個輸入框都是空的
+                (minOddsValue !== '' && maxOddsValue !== '' && currentOdds >= parseFloat(minOddsValue) && currentOdds <= parseFloat(maxOddsValue)); // 兩個輸入框都有值且符合條件
+
+            row.style.display = displayRow ? '' : 'none'; // 根據條件顯示或隱藏行
+        }
+    });
+}
 
 function formatInjuryList(injuries) {
     if (!injuries || injuries.length === 0) {

@@ -1,21 +1,33 @@
 package main
 
 import (
+	"embed"
 	"example/scanNBA/nba"
+	"io/fs"
 	"log"
 	"net/http"
 )
 
-func main() {
-	// 設置靜態文件服務
-	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/", fs)
+//go:embed static/*
+var staticFiles embed.FS
 
-	// 設置API端點
-	http.HandleFunc("/api/games", gamesHandler)
+func main() {
+	// 创建一个新的HTTP多路复用器
+	mux := http.NewServeMux()
+
+	// 设置静态文件服务
+	// 使用embed文件系统代替http.Dir
+	staticFS, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		log.Fatal(err)
+	}
+	mux.Handle("/", http.FileServer(http.FS(staticFS)))
+
+	// 设置API端点
+	mux.HandleFunc("/api/games", gamesHandler)
 
 	log.Println("Server starting on :8080...")
-	err := http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", mux)
 	if err != nil {
 		log.Fatal(err)
 	}

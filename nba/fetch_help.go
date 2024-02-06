@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -172,4 +173,41 @@ func getDishFetch(searchTeam string) []string {
 
 	return result
 
+}
+
+// calculateTeamScores 根据总大小分和让分计算主客场的大小分
+func calculateTeamScores(totalOverUnder, pointSpread string) (string, string, error) {
+
+	total, err := strconv.ParseFloat(totalOverUnder, 64)
+	if err != nil {
+		return "", "", fmt.Errorf("解析总大小分时出错: %v", err)
+	}
+
+	spread, err := strconv.ParseFloat(pointSpread, 64)
+	if err != nil {
+		return "", "", fmt.Errorf("解析让分时出错: %v", err)
+	}
+
+	// 计算主客场的预期得分
+	homeScore := (total / 2) - (spread / 2)
+	awayScore := (total / 2) + (spread / 2)
+
+	if spread < 0 {
+		homeScore = homeScore - 0.5
+		awayScore = awayScore - 0.5
+	}
+	// 确保主队和客队的总得分不超过整场的大小分
+	if homeScore+awayScore > total {
+		return "", "", fmt.Errorf("主队和客队的总得分超过了整场的大小分")
+	}
+
+	// 四舍五入到最接近的整数
+	homeScoreRounded := math.Round(homeScore)
+	awayScoreRounded := math.Round(awayScore)
+
+	// 将得分转换为字符串
+	awayScoreStr := fmt.Sprintf("%.0f", homeScoreRounded)
+	homeScoreStr := fmt.Sprintf("%.0f", awayScoreRounded)
+
+	return homeScoreStr, awayScoreStr, nil
 }

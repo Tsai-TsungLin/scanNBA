@@ -1,0 +1,14 @@
+version: '3'
+services:
+  app:
+    restart: always
+    image: scannba:1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "3M"
+        max-file: "3"
+
+
+    ports:
+      - 8080:8080

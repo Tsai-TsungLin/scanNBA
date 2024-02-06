@@ -26,6 +26,8 @@ type Match struct {
 	CurrentOdds      string              `json:"currentOdds"`
 	InitialOverUnder string              `json:"initialOverUnder"`
 	CurrentOverUnder string              `json:"currentOverUnder"`
+	AwayOverUnder    string              `json:"awayOverUnder"`
+	HomeOverUnder    string              `json:"homeOverUnder"`
 	AwayInjuries     []map[string]string `json:"awayInjuries"`
 	AwayDish         []string            `json:"awayDish"`
 	HomeInjuries     []map[string]string `json:"homeInjuries"`
@@ -132,16 +134,42 @@ func GetNBAData() []byte {
 						match.InitialOverUnder = event.Odds.Total.Over.Open.Line[1:]
 						if event.Odds.AwayTeamOdds.Favorite {
 
-							match.InitialOdds = chineseTeam[awayTeam] + " " + event.Odds.PointSpread.Away.Open.Line
-							match.CurrentOdds = chineseTeam[awayTeam] + " " + event.Odds.PointSpread.Away.Close.Line
+							match.InitialOdds = event.Odds.PointSpread.Away.Open.Line
+							match.CurrentOdds = event.Odds.PointSpread.Away.Close.Line
+
+							// 調用函數計算主客場得分
+							homeScore, awayScore, err := calculateTeamScores(match.CurrentOverUnder, event.Odds.PointSpread.Away.Close.Line)
+							if err != nil {
+								// 處理錯誤
+								log.Printf("計算得分錯誤: %v", err)
+							} else {
+								match.HomeOverUnder = homeScore
+								match.AwayOverUnder = awayScore
+							}
+
 						} else if event.Odds.HomeTeamOdds.Favorite {
-							match.InitialOdds = chineseTeam[homeTeam] + " " + event.Odds.PointSpread.Home.Open.Line
-							match.CurrentOdds = chineseTeam[homeTeam] + " " + event.Odds.PointSpread.Home.Close.Line
+
+							match.InitialOdds = string([]byte(event.Odds.PointSpread.Home.Open.Line)[1:])
+							match.CurrentOdds = string([]byte(event.Odds.PointSpread.Home.Close.Line)[1:])
+
+							// 調用函數計算主客場得分
+							homeScore, awayScore, err := calculateTeamScores(match.CurrentOverUnder, event.Odds.PointSpread.Home.Close.Line[1:])
+							if err != nil {
+								// 處理錯誤
+								log.Printf("計算得分錯誤: %v", err)
+							} else {
+								match.HomeOverUnder = homeScore
+								match.AwayOverUnder = awayScore
+							}
 						} else {
+							match.CurrentOverUnder = "赔率信息不明确"
+							match.InitialOverUnder = "赔率信息不明确"
 							match.InitialOdds = "赔率信息不明确"
 							match.CurrentOdds = "赔率信息不明确"
 						}
 					} else {
+						match.CurrentOverUnder = "尚未開盤"
+						match.InitialOverUnder = "尚未開盤"
 						match.InitialOdds = "尚未開盤"
 						match.CurrentOdds = "尚未開盤"
 					}
