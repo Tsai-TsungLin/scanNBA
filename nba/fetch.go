@@ -40,17 +40,22 @@ func GetNBAData() []byte {
 	today := time.Now()
 
 	// 檢查時間是否已過中午12點
-	var newTime string
-	if today.Hour() >= 12 {
-		newTime = today.Format("20060102")
-	} else {
-		newTime = today.AddDate(0, 0, -1).Format("20060102") // 如果沒有過中午12點，則減去一天
-	}
+	// var newTime string
+	// if today.Hour() >= 12 {
+	// 	newTime = today.Format("20060102")
+	// } else {
+	// 	newTime = today.AddDate(0, 0, -1).Format("20060102") // 如果沒有過中午12點，則減去一天
+	// }
+
+	// 轉成UTC-4
+	zone := time.FixedZone("", -4*60*60)
+
+	newTime := today.In(zone).Format("20060102")
+
+	log.Println("newTime: ", newTime)
 
 	// 獲取數據 API URL
 	url := "https://site.api.espn.com/apis/v2/scoreboard/header?sport=basketball&league=nba&dates=" + newTime + "&tz=America%2FNew_York&showAirings=buy%2Clive%2Creplay&showZipLookup=true&buyWindow=1m&lang=en&region=us&contentorigin=espn"
-
-	log.Println(url)
 
 	resp, err := http.Get(url)
 	if err != nil {
