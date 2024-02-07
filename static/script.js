@@ -85,13 +85,16 @@ function renderGames(matches) {
     table.appendChild(tbody);
     gamesElement.appendChild(table);
 }
-
-function toggleInjuryList(listId) { // 新增此函數
+// 更新 toggleInjuryList 函數以切換按鈕文字
+function toggleInjuryList(listId) {
     var element = document.getElementById(listId);
+    var button = document.getElementById('btn' + listId); // 根據listId獲取對應的按鈕
     if (element.style.display === "none") {
         element.style.display = "block";
+        button.textContent = "收起"; // 當列表展開時，按鈕顯示“收起”
     } else {
         element.style.display = "none";
+        button.textContent = "展開"; // 當列表收起時，按鈕顯示“展開”
     }
 }
 
@@ -133,24 +136,29 @@ function filterGames() {
 }
 
 function formatInjuryList(injuries, listId) {
+    // 檢查是否有傷兵數據
     if (!injuries || injuries.length === 0) {
-        return '無';
+        // 返回“無傷兵名單”並置中顯示，並賦予特定的class
+        return '<div class="no-injuries">無傷兵名單</div>';
     }
 
-    let button = `<button onclick="toggleInjuryList('${listId}')">展開/收起</button>`; 
-    let injuryTable = `<div id="${listId}" style="display: none;">` ;
-    injuryTable += '<table class="injury-table">';
-    injuryTable += '<tr><th>球員</th><th>狀態</th></tr>';
+    let buttonHTML = `<div class="injury-list-button-container"><button id="btn${listId}" class="injury-list-toggle-button" onclick="toggleInjuryList('${listId}')">展開</button></div>`;
+    let injuryTableHTML = `<div id="${listId}" class="injury-list" style="display: none;">`;
+    injuryTableHTML += '<table class="injury-table">';
+    injuryTableHTML += '<tr><th>球員</th><th>狀態</th></tr>';
 
     injuries.forEach(injury => {
         let playerNameLink = `<a href="${injury.link}" target="_blank">${injury.name}</a>`;
         let statusClass = injury.status === 'GTD' ? 'status-gtd' : 'status-out';
-        injuryTable += `<tr><td>${playerNameLink}</td><td class="${statusClass}">${injury.status}</td></tr>`;
+        injuryTableHTML += `<tr><td>${playerNameLink}</td><td class="${statusClass}">${injury.status}</td></tr>`;
     });
 
-    injuryTable += '</table></div>';
-    return button + injuryTable; // 返回按鈕和傷兵名單
+    injuryTableHTML += '</table></div>';
+
+    // 返回按鈕置中的HTML，放在傷兵名單的上方
+    return buttonHTML + injuryTableHTML;
 }
+
 
 function formatDishResult(dishResults) {
     // 检查 dishResults 是否为数组

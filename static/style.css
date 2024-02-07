@@ -93,3 +93,42 @@ body {
     animation-delay: 0.4s;
 }
 
+.injury-list-button-container {
+    text-align: center;
+    /* 置中按鈕 */
+    margin-bottom: 10px;
+    /* 與傷兵名單的間距 */
+}
+
+.injury-list-toggle-button {
+    background-color: rgba(0, 123, 255, 0.1);
+    /* 透明背景 */
+    border: 2px solid rgba(0, 123, 255, 0.5);
+    /* 半透明邊框 */
+    color: #007bff;
+    /* 文字顏色 */
+    padding: 5px 10px;
+    /* 內邊距 */
+    border-radius: 5px;
+    /* 圓角邊框 */
+    cursor: pointer;
+    /* 鼠標樣式 */
+    transition: all 0.3s ease;
+    /* 過渡效果 */
+}
+
+.injury-list-toggle-button:hover {
+    background-color: rgba(0, 123, 255, 0.2);
+    /* 滑鼠懸停時的背景色 */
+}
+
+.no-injuries {
+    text-align: center;
+    /* 文本置中 */
+    color: #dc3545;
+    /* 文本顏色，這裡使用了一種紅色調 */
+    padding: 10px;
+    /* 上下左右的內邊距 */
+    font-weight: bold;
+    /* 字體加粗 */
+}
