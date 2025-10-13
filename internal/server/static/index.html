@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA 今日賽事分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .date {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+            padding: 50px;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .game-header:hover {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .matchup {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .home-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.6em;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .game-time {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .game-time.finished {
+            color: #28a745;
+        }
+
+        .game-time.live {
+            color: #dc3545;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .spread-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .spread-info .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .spread-info .values {
+            font-size: 1.3em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .spread-info.has-periods .values {
+            justify-content: flex-start;
+        }
+
+        .spread-basic {
+            font-size: 1em;
+            white-space: nowrap;
+        }
+
+        .spread-arrow {
+            margin: 0 10px;
+            font-size: 1.2em;
+        }
+
+        .period-scores-table {
+            display: inline-block;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            vertical-align: middle;
+        }
+
+        .betting-results {
+            display: inline-block;
+            background: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            vertical-align: middle;
+        }
+
+        .betting-results table {
+            border-collapse: collapse;
+            font-size: 0.75em;
+        }
+
+        .betting-results th {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .betting-results td {
+            padding: 4px 8px;
+            color: #333;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .betting-results .row-label {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #667eea;
+            text-align: left;
+        }
+
+        .betting-results .win {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .betting-results .lose {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .period-scores-table table {
+            border-collapse: collapse;
+            font-size: 0.75em;
+        }
+
+        .period-scores-table th {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .period-scores-table td {
+            padding: 4px 8px;
+            text-align: center;
+            border-right: 1px solid #e0e0e0;
+            color: #333;
+        }
+
+        .period-scores-table td:last-child {
+            border-right: none;
+            font-weight: bold;
+            background: #f8f9fa;
+        }
+
+        .period-scores-table tr:first-child td {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .no-spread {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .injuries-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .injury-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .injury-box.away {
+            border-left-color: #764ba2;
+        }
+
+        .injury-box h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .team-history-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .team-history {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .team-history.away {
+            border-left-color: #764ba2;
+        }
+
+        .team-history h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .team-history h3:hover {
+            background: #e9ecef;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .history-toggle {
+            font-size: 0.7em;
+            transition: transform 0.3s ease;
+        }
+
+        .team-history.collapsed .history-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .history-record {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .record-item {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: transform 0.2s;
+        }
+
+        .record-item.win {
+            background: #28a745;
+            color: white;
+        }
+
+        .record-item.loss {
+            background: #dc3545;
+            color: white;
+        }
+
+        .history-summary {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .history-details {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .team-history.collapsed .history-details {
+            max-height: 0;
+        }
+
+        .history-game {
+            padding: 8px;
+            margin-top: 8px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #ddd;
+        }
+
+        .history-game.win {
+            border-left-color: #28a745;
+        }
+
+        .history-game.loss {
+            border-left-color: #dc3545;
+        }
+
+        .history-game-info {
+            flex: 1;
+        }
+
+        .history-game-date {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .history-game-opponent {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .history-game-score {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .history-game-result {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: white;
+        }
+
+        .history-game.win .history-game-result {
+            background: #28a745;
+        }
+
+        .history-game.loss .history-game-result {
+            background: #dc3545;
+        }
+
+        .venue-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            margin-left: 5px;
+        }
+
+        .injury-list {
+            list-style: none;
+        }
+
+        .injury-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #ddd;
+        }
+
+        .injury-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .injury-player {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 1em;
+        }
+
+        .injury-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .injury-status.day-to-day {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .injury-status.out {
+            background: #dc3545;
+            color: white;
+        }
+
+        .injury-status.questionable {
+            background: #ff9800;
+            color: white;
+        }
+
+        .injury-detail {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.4;
+            margin-top: 4px;
+            display: none;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .injury-item.expanded .injury-detail {
+            display: block;
+        }
+
+        .injury-item {
+            cursor: pointer;
+        }
+
+        .injury-item:hover {
+            background: #f8f9fa;
+        }
+
+        .game-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .game-card.collapsed .game-content {
+            max-height: 0;
+        }
+
+        .toggle-icon {
+            display: inline-block;
+            margin-left: 10px;
+            transition: transform 0.3s ease;
+            font-size: 0.8em;
+            color: #667eea;
+        }
+
+        .game-card.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .spread-preview {
+            display: none;
+            font-size: 0.9em;
+            color: #667eea;
+            margin-left: 15px;
+            font-weight: normal;
+        }
+
+        .game-card.collapsed .spread-preview {
+            display: inline;
+        }
+
+        .game-card.collapsed .game-content {
+            display: none;
+        }
+
+        .no-injuries {
+            color: #28a745;
+            font-weight: bold;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .player-stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .player-stats-wrapper {
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .player-stats-table thead {
+            background: #667eea;
+            color: white;
+        }
+
+        .player-stats-table th {
+            padding: 10px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .player-stats-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .player-row {
+            transition: background 0.2s;
+        }
+
+        .player-row:hover {
+            background: #f8f9fa;
+        }
+
+        .player-stats-table td {
+            color: #000;
+        }
+
+
+        .player-name-cell {
+            width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .section-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .injuries-section {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .matchup {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏀 NBA 今日賽事分析</h1>
+            <div class="date" id="gameDate">載入中...</div>
+        </div>
+
+        <div id="content" class="loading">
+            <div>載入比賽資料中...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadGames() {
+            try {
+                const response = await fetch('/api/games');
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                renderGames(data);
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        <h2>載入失敗</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function parseInjury(injuryText) {
+            // 解析格式: "Name Status Date: Detail"
+            const parts = injuryText.split(' ');
+
+            let playerName = '';
+            let status = '';
+            let detail = '';
+            let dateStr = '';
+
+            // 找到狀態關鍵字的位置
+            let statusIndex = -1;
+            const statusKeywords = ['Day-To-Day', 'Out', 'Questionable', 'Doubtful', 'Probable'];
+
+            for (let i = 0; i < parts.length; i++) {
+                if (statusKeywords.includes(parts[i])) {
+                    statusIndex = i;
+                    status = parts[i];
+                    break;
+                }
+            }
+
+            if (statusIndex > 0) {
+                playerName = parts.slice(0, statusIndex).join(' ');
+                const remainingText = parts.slice(statusIndex + 1).join(' ');
+
+                // 提取日期 (格式: Oct 8, Sep 30 等)
+                const dateMatch = remainingText.match(/([A-Z][a-z]{2})\s+(\d+)/);
+                if (dateMatch) {
+                    dateStr = dateMatch[0]; // "Oct 8" or "Sep 30"
+                }
+
+                detail = remainingText;
+            } else {
+                playerName = injuryText;
+            }
+
+            return { playerName, status, detail, dateStr };
+        }
+
+        function parseDateStr(dateStr) {
+            // 將 "Oct 8" 轉換為可排序的日期
+            if (!dateStr) return new Date(0);
+
+            const months = {
+                'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+            };
+
+            const parts = dateStr.split(' ');
+            const month = months[parts[0]];
+            const day = parseInt(parts[1]);
+
+            const year = new Date().getFullYear();
+            return new Date(year, month, day);
+        }
+
+        function sortInjuriesByDate(injuries) {
+            return injuries.map(inj => ({
+                text: inj,
+                parsed: parseInjury(inj),
+                date: parseDateStr(parseInjury(inj).dateStr)
+            }))
+            .sort((a, b) => b.date - a.date) // 最新的在前
+            .map(item => item.text);
+        }
+
+        function getStatusClass(status) {
+            if (status === 'Day-To-Day') return 'day-to-day';
+            if (status === 'Out') return 'out';
+            if (status === 'Questionable' || status === 'Doubtful') return 'questionable';
+            return 'day-to-day';
+        }
+
+        function renderInjuries(injuries) {
+            if (injuries.length === 0) {
+                return '<div class="no-injuries">✓ 無傷兵</div>';
+            }
+
+            // 按日期排序
+            const sortedInjuries = sortInjuriesByDate(injuries);
+
+            return sortedInjuries.map((injury, idx) => {
+                const parsed = parseInjury(injury);
+                const statusClass = getStatusClass(parsed.status);
+
+                return `
+                    <div class="injury-item" onclick="toggleInjuryDetail(this)">
+                        <div class="injury-player">
+                            ${parsed.playerName}
+                            ${parsed.status ? `<span class="injury-status ${statusClass}">${parsed.status}</span>` : ''}
+                        </div>
+                        ${parsed.detail ? `<div class="injury-detail">${parsed.detail}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleInjuryDetail(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function toggleGame(headerElement) {
+            const gameCard = headerElement.closest('.game-card');
+            gameCard.classList.toggle('collapsed');
+        }
+
+        function toggleHistory(element) {
+            const historyBox = element.closest('.team-history');
+            historyBox.classList.toggle('collapsed');
+        }
+
+        function switchTab(gameCard, tabName) {
+            // 切換標籤按鈕狀態
+            const tabs = gameCard.querySelectorAll('.tab-button');
+            tabs.forEach(tab => {
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            // 切換內容顯示
+            const contents = gameCard.querySelectorAll('.tab-content');
+            contents.forEach(content => {
+                if (content.dataset.tab === tabName) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        }
+
+        function renderPeriodScores(periodScores, homeTeamName, awayTeamName, homeTotal, awayTotal) {
+            if (!periodScores) {
+                return '';
+            }
+
+            return `
+                <div class="period-scores-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>隊伍</th>
+                                <th>Q1</th>
+                                <th>Q2</th>
+                                <th>Q3</th>
+                                <th>Q4</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="text-align: left; font-weight: bold">${awayTeamName}</td>
+                                <td>${periodScores.awayPeriods[0]}</td>
+                                <td>${periodScores.awayPeriods[1]}</td>
+                                <td>${periodScores.awayPeriods[2]}</td>
+                                <td>${periodScores.awayPeriods[3]}</td>
+                                <td>${awayTotal}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: bold">${homeTeamName}</td>
+                                <td>${periodScores.homePeriods[0]}</td>
+                                <td>${periodScores.homePeriods[1]}</td>
+                                <td>${periodScores.homePeriods[2]}</td>
+                                <td>${periodScores.homePeriods[3]}</td>
+                                <td>${homeTotal}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderBettingResults(periodScores, homeSpread, awayTotal, homeTotal) {
+            if (!periodScores) {
+                return '';
+            }
+
+            // 計算上半場比分 (Q1 + Q2)
+            const halfAwayScore = periodScores.awayPeriods[0] + periodScores.awayPeriods[1];
+            const halfHomeScore = periodScores.homePeriods[0] + periodScores.homePeriods[1];
+            const halfTotal = halfAwayScore + halfHomeScore;
+
+            // 計算全場
+            const fullTotal = awayTotal + homeTotal;
+
+            // 讓分盤口
+            const spreadValue = parseFloat(homeSpread) || 0;
+
+            // 上半場實際分差（主隊 - 客隊）
+            const halfDiff = halfHomeScore - halfAwayScore;
+            const halfSpreadText = halfDiff > 0 ? `主-${halfDiff}` : halfDiff < 0 ? `客-${Math.abs(halfDiff)}` : '平';
+
+            // 上半場讓分結果（主隊加讓分後）
+            const halfSpreadResult = halfDiff + spreadValue;
+            const halfSpreadClass = halfSpreadResult > 0 ? 'win' : halfSpreadResult < 0 ? 'lose' : '';
+
+            // 全場實際分差（主隊 - 客隊）
+            const fullDiff = homeTotal - awayTotal;
+            const fullSpreadText = fullDiff > 0 ? `主-${fullDiff}` : fullDiff < 0 ? `客-${Math.abs(fullDiff)}` : '平';
+
+            // 全場讓分結果（主隊加讓分後）
+            const fullSpreadResult = fullDiff + spreadValue;
+            const fullSpreadClass = fullSpreadResult > 0 ? 'win' : fullSpreadResult < 0 ? 'lose' : '';
+
+            return `
+                <div class="betting-results">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>上半</th>
+                                <th>全場</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="row-label">讓分</td>
+                                <td class="${halfSpreadClass}">${halfSpreadText}</td>
+                                <td class="${fullSpreadClass}">${fullSpreadText}</td>
+                            </tr>
+                            <tr>
+                                <td class="row-label">大小</td>
+                                <td>${halfTotal}</td>
+                                <td>${fullTotal}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderPlayerStats(players, teamName, gameStatus) {
+            if (!players || players.length === 0) {
+                return '<p style="text-align: center; color: #666;">暫無球員數據</p>';
+            }
+
+            const rows = players.map(player => {
+                // 只有進行中的比賽才顯示 on-court 標記
+                const showOnCourt = gameStatus === 2 && player.onCourt;
+                const onCourtIndicator = showOnCourt ? '🏀 ' : '';
+
+                return `
+                    <tr class="player-row">
+                        <td class="player-name-cell">${onCourtIndicator}${player.name}</td>
+                        <td style="text-align: center">${player.position}</td>
+                        <td style="text-align: center">${player.points}</td>
+                        <td style="text-align: center">${player.rebounds}</td>
+                        <td style="text-align: center">${player.assists}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <div class="player-stats-wrapper">
+                    <table class="player-stats-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 200px; text-align: left">球員</th>
+                                <th style="width: 60px; text-align: center">位置</th>
+                                <th style="text-align: center; width: 60px">得分</th>
+                                <th style="text-align: center; width: 60px">籃板</th>
+                                <th style="text-align: center; width: 60px">助攻</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderTeamHistory(history, teamName, isAway = false) {
+            if (!history || !history.recentGames || history.recentGames.length === 0) {
+                return '';
+            }
+
+            // 簡化顯示：只顯示 W/L
+            const records = history.recentGames.map(game => {
+                const resultClass = game.result === 'W' ? 'win' : 'loss';
+                return `<div class="record-item ${resultClass}">${game.result}</div>`;
+            }).join('');
+
+            // 詳細顯示：顯示對戰隊伍等資訊
+            const detailGames = history.recentGames.map(game => {
+                const resultClass = game.result === 'W' ? 'win' : 'loss';
+                const venue = game.isHome ? '主' : '客';
+
+                return `
+                    <div class="history-game ${resultClass}">
+                        <div class="history-game-info">
+                            <div class="history-game-date">
+                                ${game.date}
+                                <span class="venue-badge">${venue}場</span>
+                            </div>
+                            <div class="history-game-opponent">vs ${game.opponent}</div>
+                            <div class="history-game-score">${game.score}</div>
+                        </div>
+                        <div class="history-game-result">${game.result}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const winRate = ((history.winCount / (history.winCount + history.lossCount)) * 100).toFixed(0);
+            const awayClass = isAway ? 'away' : '';
+
+            return `
+                <div class="team-history ${awayClass} collapsed">
+                    <h3 onclick="toggleHistory(this)">
+                        <span>📊 ${teamName} 近期戰績</span>
+                        <span class="history-toggle">▼</span>
+                    </h3>
+                    <div class="history-record">
+                        ${records}
+                    </div>
+                    <div class="history-summary">
+                        近 ${history.recentGames.length} 場: ${history.winCount} 勝 ${history.lossCount} 敗 (勝率 ${winRate}%)
+                    </div>
+                    <div class="history-details">
+                        ${detailGames}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGames(data) {
+            document.getElementById('gameDate').textContent = data.date;
+
+            if (!data.games || data.games.length === 0) {
+                document.getElementById('content').innerHTML = `
+                    <div class="game-card">
+                        <p style="text-align: center; color: #666;">今天沒有比賽</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = data.games.map((game, index) => {
+                // 根據比賽狀態決定顯示內容
+                let spreadLabel = '主隊讓分';
+                let timeClass = '';
+                let displayScore = '';
+
+                if (game.gameStatus === 1) {
+                    // 未開始：顯示開盤讓分
+                    spreadLabel = '開盤讓分';
+                } else if (game.gameStatus === 2) {
+                    // 進行中：顯示開賽前盤口（NBA API 不提供即時更新）
+                    spreadLabel = '開賽前盤口';
+                    timeClass = 'live';
+                    displayScore = game.scoreDisplay;
+                } else if (game.gameStatus === 3) {
+                    // 已結束：顯示開賽前盤口
+                    spreadLabel = '開賽前盤口';
+                    timeClass = 'finished';
+                    displayScore = game.scoreDisplay;
+                }
+
+                const periodScoresHTML = renderPeriodScores(
+                    game.periodScores,
+                    game.homeTeam.nameCN,
+                    game.awayTeam.nameCN,
+                    game.homeScore,
+                    game.awayScore
+                );
+
+                const bettingResultsHTML = renderBettingResults(
+                    game.periodScores,
+                    game.spread.current,
+                    game.awayScore,
+                    game.homeScore
+                );
+
+                const hasPeriods = game.periodScores ? 'has-periods' : '';
+
+                const spreadHTML = game.spread.hasData ? `
+                    <div class="spread-info ${hasPeriods}">
+                        <div class="label">${spreadLabel}</div>
+                        <div class="values">
+                            <div class="spread-basic">
+                                主隊 ${game.spread.current}
+                                ${displayScore ? `<span class="spread-arrow">▶</span> ${displayScore}` : ''}
+                            </div>
+                            ${periodScoresHTML}
+                            ${bettingResultsHTML}
+                        </div>
+                    </div>
+                ` : `
+                    <div class="spread-info no-spread">
+                        <div class="values">暫無讓分資料</div>
+                    </div>
+                `;
+
+                const spreadPreview = game.spread.hasData
+                    ? `${game.spread.current} ${displayScore}`
+                    : '無賠率';
+
+                return `
+                    <div class="game-card collapsed">
+                        <div class="game-header" onclick="toggleGame(this)">
+                            <div class="matchup">
+                                ${index + 1}. ${game.awayTeam.nameCN} @ ${game.homeTeam.nameCN}<span class="home-badge">主</span>
+                                <span class="spread-preview">${spreadPreview}</span>
+                                <span class="toggle-icon">▼</span>
+                            </div>
+                            <div class="game-time ${timeClass}">${game.gameTime}</div>
+                        </div>
+
+                        <div class="game-content">
+                            ${spreadHTML}
+
+                            <div class="team-history-section">
+                                ${renderTeamHistory(game.awayHistory, game.awayTeam.nameCN, true)}
+                                ${renderTeamHistory(game.homeHistory, game.homeTeam.nameCN, false)}
+                            </div>
+
+                            ${(game.gameStatus === 2 || game.gameStatus === 3) && game.homePlayers && game.homePlayers.length > 0 ? `
+                                <div class="section-tabs">
+                                    <button class="tab-button active" data-tab="players" onclick="switchTab(this.closest('.game-card'), 'players')">
+                                        📊 球員數據
+                                    </button>
+                                    <button class="tab-button" data-tab="injuries" onclick="switchTab(this.closest('.game-card'), 'injuries')">
+                                        🏥 傷兵名單
+                                    </button>
+                                </div>
+
+                                <div class="tab-content active" data-tab="players">
+                                    <div class="injuries-section">
+                                        <div class="injury-box away">
+                                            <h3>🏃 ${game.awayTeam.nameCN} 球員數據</h3>
+                                            ${renderPlayerStats(game.awayPlayers, game.awayTeam.nameCN, game.gameStatus)}
+                                        </div>
+                                        <div class="injury-box">
+                                            <h3>🏠 ${game.homeTeam.nameCN} 球員數據</h3>
+                                            ${renderPlayerStats(game.homePlayers, game.homeTeam.nameCN, game.gameStatus)}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="tab-content" data-tab="injuries">
+                                    <div class="injuries-section">
+                                        <div class="injury-box away">
+                                            <h3>🏃 ${game.awayTeam.nameCN} 傷兵</h3>
+                                            ${renderInjuries(game.awayInjuries)}
+                                        </div>
+                                        <div class="injury-box">
+                                            <h3>🏠 ${game.homeTeam.nameCN} 傷兵</h3>
+                                            ${renderInjuries(game.homeInjuries)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="injuries-section">
+                                    <div class="injury-box away">
+                                        <h3>🏃 ${game.awayTeam.nameCN} 傷兵</h3>
+                                        ${renderInjuries(game.awayInjuries)}
+                                    </div>
+                                    <div class="injury-box">
+                                        <h3>🏠 ${game.homeTeam.nameCN} 傷兵</h3>
+                                        ${renderInjuries(game.homeInjuries)}
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        // 載入資料
+        loadGames();
+
+        // 每 5 分鐘自動更新
+        setInterval(loadGames, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

@@ -248,6 +248,7 @@ type Schedule struct {
 	Timestamp string `json:"timestamp"`
 }
 
+<<<<<<< HEAD:nba/old/old_nba.go
 type Game struct {
 	Profile struct {
 		ArenaLocation string      `json:"arenaLocation"`
@@ -439,6 +440,8 @@ type GameInfo struct {
 	GameTime    time.Time
 }
 
+=======
+>>>>>>> main:nba.go
 // 把隊伍存進map
 func TeamInit() map[string]string {
 
@@ -620,6 +623,10 @@ func sortComment(name, comment string) (result string) {
 	return result
 }
 
+<<<<<<< HEAD:nba/old/old_nba.go
+=======
+// Get the nba game of the day
+>>>>>>> main:nba.go
 func PKTeam() {
 	startTime := time.Now()
 
@@ -699,6 +706,7 @@ func PKTeam() {
 	fmt.Println("Spend Time:", time.Since(startTime))
 }
 
+<<<<<<< HEAD:nba/old/old_nba.go
 func processGame(game Game) GameInfo {
 	// 從 game 中提取比賽時間和球隊信息
 	layout := "2006-01-02T15:04"
@@ -744,6 +752,8 @@ func formatInjury(injuries []string) string {
 	return formatted
 }
 
+=======
+>>>>>>> main:nba.go
 // Get the nba game of the day , search by "StartTime"
 func PKTeamOnStartTime(st string) {
 	if len(st) != 5 {
@@ -944,6 +954,7 @@ func changeWinLose(r string) (result string) {
 	return
 }
 
+<<<<<<< HEAD:nba/old/old_nba.go
 // formatDish 格式化過盤狀況信息
 func formatDish(dish map[string]string, team string) string {
 	if result, ok := dish[team]; ok {
@@ -951,3 +962,8 @@ func formatDish(dish map[string]string, team string) string {
 	}
 	return "無可用數據"
 }
+=======
+// func main() {
+// 	PKTeam()
+// }
+>>>>>>> main:nba.go
