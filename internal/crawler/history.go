@@ -12,22 +12,33 @@ import (
 
 // convertGameDateTime 將 ISO 時間轉換為台北時間 "2025/10/02 08:00:00"
 func convertGameDateTime(isoTime string) string {
-	// 解析 ISO 格式 "2025-10-02T12:00:00Z"
-	t, err := time.Parse(time.RFC3339, isoTime)
-	if err != nil {
-		// 嘗試解析沒有 Z 的格式
-		t, err = time.Parse("2006-01-02T15:04:05", isoTime)
-		if err != nil {
-			return isoTime // 解析失敗，返回原始字串
-		}
+	// NBA API 的 gameDateTimeEst 名為 EST，帶 Z 結尾但實際是 EST 時區的時間值
+	// 例如: "2025-10-07T21:30:00Z" 表示 EST 21:30（不是 UTC 21:30）
+	// 需要先解析，然後加上 EST->UTC 的偏移（+4 夏令時或 +5 標準時間），再轉台北
+
+	// 移除 Z，當成無時區的時間解析
+	isoTimeNoZ := isoTime
+	if len(isoTime) > 0 && isoTime[len(isoTime)-1] == 'Z' {
+		isoTimeNoZ = isoTime[:len(isoTime)-1]
 	}
+
+	// 解析為無時區的時間
+	t, err := time.Parse("2006-01-02T15:04:05", isoTimeNoZ)
+	if err != nil {
+		return isoTime // 解析失敗，返回原始字串
+	}
+
+	// 將這個時間視為 EST 時區（UTC-5 標準時間，UTC-4 夏令時）
+	// 10月通常還在夏令時（EDT），使用 UTC-4
+	estLocation := time.FixedZone("EST", -4*60*60)
+	tEST := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, estLocation)
 
 	// 轉換為台北時區 (UTC+8)
 	loc, err := time.LoadLocation("Asia/Taipei")
 	if err != nil {
-		loc = time.FixedZone("CST", 8*60*60) // 如果找不到時區，使用固定偏移
+		loc = time.FixedZone("CST", 8*60*60)
 	}
-	tTaipei := t.In(loc)
+	tTaipei := tEST.In(loc)
 
 	// 格式化為 "2025/10/02 08:00:00"
 	return tTaipei.Format("2006/01/02 15:04:05")
