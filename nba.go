@@ -245,7 +245,7 @@ type Schedule struct {
 	Timestamp string `json:"timestamp"`
 }
 
-//把隊伍存進map
+// 把隊伍存進map
 func TeamInit() map[string]string {
 
 	teamMap := make(map[string]string)
@@ -283,7 +283,7 @@ func TeamInit() map[string]string {
 	return teamMap
 }
 
-//Get the injuriers of the nba team
+// Get the injuriers of the nba team
 func getInjury(searchTeam string) (result []string) {
 
 	if searchTeam == "Los Angeles Clippers" {
@@ -331,7 +331,7 @@ func getInjury(searchTeam string) (result []string) {
 
 }
 
-//取得Injury的comment
+// 取得Injury的comment
 func GetInjuryComment(searchTeam string) (result string) {
 
 	if searchTeam == "Los Angeles Clippers" {
@@ -381,7 +381,7 @@ func GetInjuryComment(searchTeam string) (result string) {
 	return result
 }
 
-//comment 分類
+// comment 分類
 func sortComment(name, comment string) (result string) {
 	switch {
 	case strings.Contains(comment, "out"):
@@ -407,7 +407,7 @@ func sortComment(name, comment string) (result string) {
 	return result
 }
 
-//Get the nba game of the day
+// Get the nba game of the day
 func PKTeam() {
 	startTime := time.Now()
 	//轉成UTC-4
@@ -511,7 +511,7 @@ func PKTeam() {
 	fmt.Println("Spend Time:", time.Since(startTime))
 }
 
-//Get the nba game of the day , search by "StartTime"
+// Get the nba game of the day , search by "StartTime"
 func PKTeamOnStartTime(st string) {
 	if len(st) != 5 {
 		fmt.Println("你輸入的時間" + st + "格式錯誤，eg: '11:00'(請用半形) ")
@@ -618,7 +618,7 @@ func PKTeamOnStartTime(st string) {
 	fmt.Println("Spend Time:", time.Since(startTime))
 }
 
-//取得近五場輸贏盤口資訊
+// 取得近五場輸贏盤口資訊
 func getDish(searchTeam string) map[string]string {
 	var (
 		season string
@@ -709,3 +709,7 @@ func changeWinLose(r string) (result string) {
 	}
 	return
 }
+
+// func main() {
+// 	PKTeam()
+// }

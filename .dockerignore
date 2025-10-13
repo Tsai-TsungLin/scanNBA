@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# 編譯產物
+nba-scanner
+*.exe
+
+# 測試和文件
+*.md
+!README.md
+docs/
+
+# IDE
+.vscode/
+.idea/
+
+# 臨時檔案
+*.log
+*.tmp
+tmp/
+
+# 測試檔案
+*_test.go
+test_*.go

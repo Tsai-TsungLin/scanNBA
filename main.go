@@ -1,5 +1,7 @@
 package main
 
+import "nba-scanner/cmd"
+
 func main() {
-	PKTeam()
+	cmd.Execute()
 }
