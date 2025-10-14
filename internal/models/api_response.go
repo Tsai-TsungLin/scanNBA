@@ -10,6 +10,7 @@ type APIResponse struct {
 type GameInfo struct {
 	GameID         string          `json:"gameId"`         // 比賽 ID
 	GameTime       string          `json:"gameTime"`       // 開賽時間或比賽狀態 (Q4 04:00)
+	GameTimeUTC    string          `json:"gameTimeUTC"`    // UTC 時間（用於排序）
 	GameStatus     int             `json:"gameStatus"`     // 1=未開始, 2=進行中, 3=已結束
 	GameStatusText string          `json:"gameStatusText"` // 狀態文字
 	ScoreDisplay   string          `json:"scoreDisplay"`   // 比分顯示 "[98-128]" 或空字串

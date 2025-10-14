@@ -654,6 +654,226 @@
             text-align: center;
         }
 
+        .date-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .date-selector button {
+            padding: 10px 15px;
+            border: 2px solid white;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .date-selector button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Calendar Picker Styles */
+        .calendar-picker {
+            position: relative;
+            display: inline-block;
+        }
+
+        .calendar-input {
+            padding: 10px 15px;
+            border: 2px solid white;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 150px;
+            user-select: none;
+        }
+
+        .calendar-input:hover {
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .calendar-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 1.2em;
+        }
+
+        .calendar-dropdown {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            z-index: 1000;
+            display: none;
+            min-width: 320px;
+        }
+
+        .calendar-dropdown.active {
+            display: block;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+
+        .calendar-month-select {
+            font-size: 1em;
+            font-weight: bold;
+            color: #333;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .calendar-nav-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: #667eea;
+            transition: all 0.2s;
+        }
+
+        .calendar-nav-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-size: 0.85em;
+            color: #666;
+            font-weight: bold;
+            padding: 8px 0;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #333;
+            transition: all 0.2s;
+        }
+
+        .calendar-day:hover {
+            background: #f0f0ff;
+        }
+
+        .calendar-day.other-month {
+            color: #ccc;
+        }
+
+        .calendar-day.selected {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #667eea;
+        }
+
+        /* Loading Modal */
+        .loading-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-modal.active {
+            display: flex;
+        }
+
+        .loading-modal-content {
+            background: white;
+            padding: 40px 60px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .loading-modal-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-modal-text {
+            font-size: 1.2em;
+            color: #333;
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             .injuries-section {
                 grid-template-columns: 1fr;
@@ -670,10 +890,61 @@
     </style>
 </head>
 <body>
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="loading-modal">
+        <div class="loading-modal-content">
+            <div class="loading-modal-spinner"></div>
+            <div class="loading-modal-text">🏀 載入比賽資料中...</div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
-            <h1>🏀 NBA 今日賽事分析</h1>
+            <h1>🏀 NBA 賽事分析</h1>
             <div class="date" id="gameDate">載入中...</div>
+            <div class="date-selector">
+                <button onclick="loadToday()">今天</button>
+                <button onclick="loadTomorrow()">明天</button>
+                <div class="calendar-picker">
+                    <div class="calendar-input" id="calendarInput" onclick="toggleCalendar()">
+                        <span id="selectedDateText">2025/10/14</span>
+                    </div>
+                    <div class="calendar-dropdown" id="calendarDropdown">
+                        <div class="calendar-header">
+                            <select class="calendar-month-select" id="monthSelect" onchange="renderCalendar()">
+                                <option value="0">January 2025</option>
+                                <option value="1">February 2025</option>
+                                <option value="2">March 2025</option>
+                                <option value="3">April 2025</option>
+                                <option value="4">May 2025</option>
+                                <option value="5">June 2025</option>
+                                <option value="6">July 2025</option>
+                                <option value="7">August 2025</option>
+                                <option value="8">September 2025</option>
+                                <option value="9">October 2025</option>
+                                <option value="10">November 2025</option>
+                                <option value="11">December 2025</option>
+                            </select>
+                            <div class="calendar-nav">
+                                <button class="calendar-nav-btn" onclick="changeMonth(-1)">◀</button>
+                                <button class="calendar-nav-btn" onclick="changeMonth(1)">▶</button>
+                            </div>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div class="calendar-weekday">S</div>
+                            <div class="calendar-weekday">M</div>
+                            <div class="calendar-weekday">T</div>
+                            <div class="calendar-weekday">W</div>
+                            <div class="calendar-weekday">T</div>
+                            <div class="calendar-weekday">F</div>
+                            <div class="calendar-weekday">S</div>
+                        </div>
+                        <div class="calendar-days" id="calendarDays">
+                            <!-- Days will be generated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="content" class="loading">
@@ -682,17 +953,52 @@
     </div>
 
     <script>
-        async function loadGames() {
+        let currentDate = null;
+        let isLoading = false;
+        let gamesCache = {}; // 快取：{ "2025-10-14": { basic: {...}, detailed: {...} } }
+        let calendarYear = 2025;
+        let calendarMonth = 9; // October (0-indexed)
+        let selectedDate = null;
+
+        async function loadGames(dateStr = '', forceReload = false) {
+            // 防止重複載入
+            if (isLoading) {
+                console.log('正在載入中，請稍候...');
+                return;
+            }
+
             try {
-                const response = await fetch('/api/games');
+                isLoading = true;
+
+                // 顯示 Loading Modal
+                showLoadingModal();
+
+                // 檢查快取
+                if (!forceReload && gamesCache[dateStr]) {
+                    // 先顯示基本資訊（快速渲染）
+                    renderGamesBasic(gamesCache[dateStr], dateStr);
+                    hideLoadingModal();
+                    isLoading = false;
+                    return;
+                }
+
+                const url = dateStr ? `/api/games?date=${dateStr}` : '/api/games';
+                const response = await fetch(url);
                 const data = await response.json();
 
                 if (data.error) {
                     throw new Error(data.error);
                 }
 
+                // 儲存到快取
+                gamesCache[dateStr] = data;
+
                 renderGames(data);
+                hideLoadingModal();
+                isLoading = false;
             } catch (error) {
+                hideLoadingModal();
+                isLoading = false;
                 document.getElementById('content').innerHTML = `
                     <div class="error">
                         <h2>載入失敗</h2>
@@ -700,6 +1006,19 @@
                     </div>
                 `;
             }
+        }
+
+        function showLoadingModal() {
+            document.getElementById('loadingModal').classList.add('active');
+        }
+
+        function hideLoadingModal() {
+            document.getElementById('loadingModal').classList.remove('active');
+        }
+
+        // 快速渲染基本資訊（從快取）
+        function renderGamesBasic(data, dateStr) {
+            renderGames(data); // 使用完整的渲染函數
         }
 
         function parseInjury(injuryText) {
@@ -1041,15 +1360,20 @@
                 return;
             }
 
-            const html = data.games.map((game, index) => {
+            // 按照比賽時間排序（使用 gameTimeUTC）
+            const sortedGames = [...data.games].sort((a, b) => {
+                return new Date(a.gameTimeUTC) - new Date(b.gameTimeUTC);
+            });
+
+            const html = sortedGames.map((game, index) => {
                 // 根據比賽狀態決定顯示內容
                 let spreadLabel = '主隊讓分';
                 let timeClass = '';
                 let displayScore = '';
 
                 if (game.gameStatus === 1) {
-                    // 未開始：顯示開盤讓分
-                    spreadLabel = '開盤讓分';
+                    // 未開始：顯示開盤和當前盤口
+                    spreadLabel = '讓分盤口';
                 } else if (game.gameStatus === 2) {
                     // 進行中：顯示開賽前盤口（NBA API 不提供即時更新）
                     spreadLabel = '開賽前盤口';
@@ -1079,27 +1403,59 @@
 
                 const hasPeriods = game.periodScores ? 'has-periods' : '';
 
-                const spreadHTML = game.spread.hasData ? `
-                    <div class="spread-info ${hasPeriods}">
-                        <div class="label">${spreadLabel}</div>
-                        <div class="values">
-                            <div class="spread-basic">
-                                主隊 ${game.spread.current}
-                                ${displayScore ? `<span class="spread-arrow">▶</span> ${displayScore}` : ''}
+                // 根據比賽狀態顯示不同的盤口資訊
+                let spreadHTML;
+                if (game.spread.hasData) {
+                    if (game.gameStatus === 1) {
+                        // 未開始：顯示開盤和當前盤口
+                        spreadHTML = `
+                            <div class="spread-info ${hasPeriods}">
+                                <div class="label">${spreadLabel}</div>
+                                <div class="values">
+                                    <div class="spread-basic">
+                                        開盤 ${game.spread.opening} → 當前 ${game.spread.current}
+                                    </div>
+                                </div>
                             </div>
-                            ${periodScoresHTML}
-                            ${bettingResultsHTML}
+                        `;
+                    } else {
+                        // 進行中或已結束：顯示開賽前盤口 + 比分 + 各節得分 + 讓分結果
+                        spreadHTML = `
+                            <div class="spread-info ${hasPeriods}">
+                                <div class="label">${spreadLabel}</div>
+                                <div class="values">
+                                    <div class="spread-basic">
+                                        主隊 ${game.spread.current}
+                                        ${displayScore ? `<span class="spread-arrow">▶</span> ${displayScore}` : ''}
+                                    </div>
+                                    ${periodScoresHTML}
+                                    ${bettingResultsHTML}
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else if (game.gameStatus === 3 && game.periodScores) {
+                    // 已結束但無盤口：顯示比分結果
+                    spreadHTML = `
+                        <div class="spread-info no-spread ${hasPeriods}">
+                            <div class="label">比賽結果</div>
+                            <div class="values" style="justify-content: center;">
+                                ${periodScoresHTML}
+                            </div>
                         </div>
-                    </div>
-                ` : `
-                    <div class="spread-info no-spread">
-                        <div class="values">暫無讓分資料</div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    // 其他情況：暫無資料
+                    spreadHTML = `
+                        <div class="spread-info no-spread">
+                            <div class="values">暫無讓分資料</div>
+                        </div>
+                    `;
+                }
 
                 const spreadPreview = game.spread.hasData
                     ? `${game.spread.current} ${displayScore}`
-                    : '無賠率';
+                    : (game.gameStatus === 3 && displayScore ? displayScore : '無賠率');
 
                 return `
                     <div class="game-card collapsed">
@@ -1175,11 +1531,232 @@
             document.getElementById('content').innerHTML = html;
         }
 
-        // 載入資料
-        loadGames();
+        function loadToday() {
+            // 取得台北時間
+            const now = new Date();
+            // 台北是 UTC+8，JavaScript 用 UTC 表示
+            const taipeiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
 
-        // 每 5 分鐘自動更新
-        setInterval(loadGames, 5 * 60 * 1000);
+            // 如果台北時間還沒到 14:00，顯示昨天
+            let targetDate;
+            if (taipeiTime.getHours() < 14) {
+                targetDate = new Date(taipeiTime);
+                targetDate.setDate(targetDate.getDate() - 1);
+            } else {
+                targetDate = taipeiTime;
+            }
+
+            const dateStr = targetDate.toISOString().split('T')[0];
+            selectedDate = dateStr;
+            currentDate = dateStr;
+
+            // Update calendar display
+            const displayText = `${targetDate.getFullYear()}/${String(targetDate.getMonth() + 1).padStart(2, '0')}/${String(targetDate.getDate()).padStart(2, '0')}`;
+            document.getElementById('selectedDateText').textContent = displayText;
+
+            loadGames(dateStr);
+        }
+
+        function loadTomorrow() {
+            // 取得當前顯示的日期
+            let baseDate;
+            if (currentDate) {
+                // 如果已經有選擇日期，從當前日期 +1
+                baseDate = new Date(currentDate);
+            } else {
+                // 如果沒有選擇日期，使用「今天」的邏輯取得基準日期
+                const now = new Date();
+                const taipeiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+
+                if (taipeiTime.getHours() < 14) {
+                    baseDate = new Date(taipeiTime);
+                    baseDate.setDate(baseDate.getDate() - 1);
+                } else {
+                    baseDate = taipeiTime;
+                }
+            }
+
+            // 明天 = 基準日期 + 1
+            const tomorrow = new Date(baseDate);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const dateStr = tomorrow.toISOString().split('T')[0];
+            selectedDate = dateStr;
+            currentDate = dateStr;
+
+            // Update calendar display
+            const displayText = `${tomorrow.getFullYear()}/${String(tomorrow.getMonth() + 1).padStart(2, '0')}/${String(tomorrow.getDate()).padStart(2, '0')}`;
+            document.getElementById('selectedDateText').textContent = displayText;
+
+            loadGames(dateStr);
+        }
+
+        // 初始化：載入"今天"的資料（根據 14:00 規則）
+        function initializePage() {
+            const now = new Date();
+            const taipeiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+
+            // 如果台北時間還沒到 14:00，顯示昨天
+            let targetDate;
+            if (taipeiTime.getHours() < 14) {
+                targetDate = new Date(taipeiTime);
+                targetDate.setDate(targetDate.getDate() - 1);
+            } else {
+                targetDate = taipeiTime;
+            }
+
+            const dateStr = targetDate.toISOString().split('T')[0];
+            selectedDate = dateStr;
+            currentDate = dateStr;
+
+            // Initialize calendar to current month
+            calendarYear = targetDate.getFullYear();
+            calendarMonth = targetDate.getMonth();
+            document.getElementById('monthSelect').value = calendarMonth;
+
+            // Update calendar display
+            const displayText = `${targetDate.getFullYear()}/${String(targetDate.getMonth() + 1).padStart(2, '0')}/${String(targetDate.getDate()).padStart(2, '0')}`;
+            document.getElementById('selectedDateText').textContent = displayText;
+
+            loadGames(dateStr);
+        }
+
+        // Calendar Functions
+        function toggleCalendar() {
+            const dropdown = document.getElementById('calendarDropdown');
+            dropdown.classList.toggle('active');
+            if (dropdown.classList.contains('active')) {
+                renderCalendar();
+            }
+        }
+
+        function renderCalendar() {
+            const monthSelect = document.getElementById('monthSelect');
+            calendarMonth = parseInt(monthSelect.value);
+
+            const daysContainer = document.getElementById('calendarDays');
+            daysContainer.innerHTML = '';
+
+            // Get first day of month
+            const firstDay = new Date(calendarYear, calendarMonth, 1);
+            const lastDay = new Date(calendarYear, calendarMonth + 1, 0);
+            const startDay = firstDay.getDay(); // 0 = Sunday
+
+            // Get previous month's last days
+            const prevMonthLastDay = new Date(calendarYear, calendarMonth, 0).getDate();
+
+            // Get today for highlighting
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+
+            // Render days
+            let dayCount = 1;
+            let nextMonthDay = 1;
+
+            for (let i = 0; i < 42; i++) { // 6 weeks max
+                let dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+
+                if (i < startDay) {
+                    // Previous month's days
+                    const day = prevMonthLastDay - startDay + i + 1;
+                    dayElement.textContent = day;
+                    dayElement.classList.add('other-month');
+                    const prevMonth = calendarMonth - 1 < 0 ? 11 : calendarMonth - 1;
+                    const prevYear = calendarMonth - 1 < 0 ? calendarYear - 1 : calendarYear;
+                    const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    dayElement.onclick = () => selectDate(dateStr);
+                } else if (dayCount <= lastDay.getDate()) {
+                    // Current month's days
+                    dayElement.textContent = dayCount;
+                    const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(dayCount).padStart(2, '0')}`;
+
+                    if (dateStr === todayStr) {
+                        dayElement.classList.add('today');
+                    }
+
+                    if (selectedDate && dateStr === selectedDate) {
+                        dayElement.classList.add('selected');
+                    }
+
+                    dayElement.onclick = () => selectDate(dateStr);
+                    dayCount++;
+                } else {
+                    // Next month's days
+                    dayElement.textContent = nextMonthDay;
+                    dayElement.classList.add('other-month');
+                    const nextMonth = calendarMonth + 1 > 11 ? 0 : calendarMonth + 1;
+                    const nextYear = calendarMonth + 1 > 11 ? calendarYear + 1 : calendarYear;
+                    const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(nextMonthDay).padStart(2, '0')}`;
+                    dayElement.onclick = () => selectDate(dateStr);
+                    nextMonthDay++;
+                }
+
+                daysContainer.appendChild(dayElement);
+            }
+        }
+
+        function changeMonth(direction) {
+            calendarMonth += direction;
+            if (calendarMonth < 0) {
+                calendarMonth = 11;
+                calendarYear--;
+            } else if (calendarMonth > 11) {
+                calendarMonth = 0;
+                calendarYear++;
+            }
+
+            document.getElementById('monthSelect').value = calendarMonth;
+            renderCalendar();
+        }
+
+        function selectDate(dateStr) {
+            selectedDate = dateStr;
+            currentDate = dateStr;
+
+            // Update display text
+            const dateObj = new Date(dateStr);
+            const displayText = `${dateObj.getFullYear()}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')}`;
+            document.getElementById('selectedDateText').textContent = displayText;
+
+            // Close calendar
+            document.getElementById('calendarDropdown').classList.remove('active');
+
+            // Load games for selected date
+            loadGames(dateStr);
+        }
+
+        // Close calendar when clicking outside
+        document.addEventListener('click', function(event) {
+            const calendarPicker = document.querySelector('.calendar-picker');
+            const calendarDropdown = document.getElementById('calendarDropdown');
+
+            if (calendarDropdown.classList.contains('active') &&
+                !calendarPicker.contains(event.target)) {
+                calendarDropdown.classList.remove('active');
+            }
+        });
+
+        initializePage();
+
+        // 每 5 分鐘自動更新（只在查看今天的比賽時，且使用 forceReload）
+        setInterval(() => {
+            const now = new Date();
+            const taipeiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+
+            let todayDate;
+            if (taipeiTime.getHours() < 14) {
+                todayDate = new Date(taipeiTime);
+                todayDate.setDate(todayDate.getDate() - 1);
+            } else {
+                todayDate = taipeiTime;
+            }
+
+            const todayStr = todayDate.toISOString().split('T')[0];
+            if (currentDate === todayStr && !isLoading) {
+                loadGames(currentDate, true); // forceReload = true
+            }
+        }, 5 * 60 * 1000);
     </script>
 </body>
 </html>

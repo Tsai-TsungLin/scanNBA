@@ -36,8 +36,11 @@ func handleGamesAPI(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
+	// 取得日期參數
+	dateParam := r.URL.Query().Get("date")
+
 	// 取得比賽資料
-	games, err := logic.GetTodayGames()
+	games, err := logic.GetGamesByDate(dateParam)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{

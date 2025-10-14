@@ -9,6 +9,136 @@ import (
 	"time"
 )
 
+// GetGamesByDate 根據日期取得比賽資料
+// dateStr 格式: "2025-10-14" (YYYY-MM-DD)
+// 如果 dateStr 為空或為今天，使用即時 API
+// 否則使用整季賽程 API
+func GetGamesByDate(dateStr string) (*models.APIResponse, error) {
+	// 取得台北時區
+	loc, err := time.LoadLocation("Asia/Taipei")
+	if err != nil {
+		loc = time.FixedZone("CST", 8*60*60)
+	}
+	now := time.Now().In(loc)
+
+	// 解析請求的日期
+	var targetDate time.Time
+	if dateStr == "" {
+		// 沒有指定日期，使用當前日期判斷邏輯（14:00 之前顯示昨天）
+		if now.Hour() < 14 {
+			targetDate = now.AddDate(0, 0, -1) // 昨天
+		} else {
+			targetDate = now // 今天
+		}
+	} else {
+		// 解析使用者指定的日期
+		targetDate, err = time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			return nil, fmt.Errorf("日期格式錯誤: %w", err)
+		}
+	}
+
+	// 判斷是否為昨天、今天或明天（需要查詢盤口）
+	// 因為 14:00 之前會顯示昨天，所以昨天也需要盤口
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	yesterday := today.AddDate(0, 0, -1)
+	tomorrow := today.AddDate(0, 0, 1)
+	targetDateOnly := time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, loc)
+
+	needsOdds := targetDateOnly.Equal(yesterday) || targetDateOnly.Equal(today) || targetDateOnly.Equal(tomorrow)
+
+	return fetchGamesForDate(targetDate, needsOdds)
+}
+
+// fetchGamesForDate 取得指定日期的比賽資料
+func fetchGamesForDate(targetDate time.Time, needsOdds bool) (*models.APIResponse, error) {
+	var (
+		scoreboard *models.NBAScoreboard
+		odds       *models.NBAOdds
+		injuryMap  map[string][]string
+		wg         sync.WaitGroup
+		mu         sync.Mutex
+		errors     []error
+	)
+
+	// 根據是否需要盤口決定要抓取的資料數量
+	if needsOdds {
+		wg.Add(3) // 賽程 + 盤口 + 傷兵
+	} else {
+		wg.Add(2) // 只需賽程 + 傷兵
+	}
+
+	// 1. 抓取賽程（從完整賽季 API）
+	go func() {
+		defer wg.Done()
+		sb, err := crawler.FetchScheduleForDate(targetDate)
+		if err != nil {
+			mu.Lock()
+			errors = append(errors, fmt.Errorf("賽程錯誤: %w", err))
+			mu.Unlock()
+			return
+		}
+		mu.Lock()
+		scoreboard = sb
+		mu.Unlock()
+	}()
+
+	// 2. 抓取賠率（只有今天/明天才需要）
+	if needsOdds {
+		go func() {
+			defer wg.Done()
+			od, err := crawler.FetchOdds()
+			if err != nil {
+				log.Printf("賠率抓取失敗（非今天比賽可忽略）: %v", err)
+				mu.Lock()
+				odds = nil // 設為 nil 表示無盤口資料
+				mu.Unlock()
+				return
+			}
+			mu.Lock()
+			odds = od
+			mu.Unlock()
+		}()
+	}
+
+	// 3. 抓取傷兵
+	go func() {
+		defer wg.Done()
+		im := crawler.FetchInjuryMap()
+		mu.Lock()
+		injuryMap = im
+		mu.Unlock()
+	}()
+
+	wg.Wait()
+
+	// 檢查關鍵錯誤（賽程必須成功）
+	if len(errors) > 0 {
+		return nil, fmt.Errorf("抓取資料失敗: %v", errors)
+	}
+
+	// 建立賠率查找表（如果有的話）
+	var oddsMap map[string]models.SpreadInfo
+	if odds != nil {
+		oddsMap = crawler.BuildOddsMap(odds)
+	} else {
+		oddsMap = make(map[string]models.SpreadInfo) // 空的 map
+	}
+
+	// 轉換為 API 回應格式
+	response := &models.APIResponse{
+		Date:  targetDate.Format("2006-01-02"),
+		Games: make([]models.GameInfo, 0, len(scoreboard.Scoreboard.Games)),
+	}
+
+	for _, game := range scoreboard.Scoreboard.Games {
+		gameInfo := buildGameInfo(&game, oddsMap, injuryMap)
+		response.Games = append(response.Games, gameInfo)
+	}
+
+	return response, nil
+}
+
 // GetTodayGames 取得今日比賽資料（供 API 使用）
 // 台北時間 12:00 之後會顯示明天的比賽
 func GetTodayGames() (*models.APIResponse, error) {
@@ -199,8 +329,9 @@ func buildGameInfo(game *models.Game, oddsMap map[string]models.SpreadInfo, inju
 	}
 
 	return models.GameInfo{
-		GameID: game.GameID,
+		GameID:         game.GameID,
 		GameTime:       gameTimeDisplay,
+		GameTimeUTC:    game.GameTimeUTC,
 		GameStatus:     game.GameStatus,
 		GameStatusText: game.GameStatusText,
 		ScoreDisplay:   scoreDisplay,
