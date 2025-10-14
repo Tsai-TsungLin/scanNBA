@@ -11,11 +11,15 @@ type TeamHistory struct {
 
 // GameResult 單場比賽結果
 type GameResult struct {
-	Date       string `json:"date"`       // 比賽日期
-	Opponent   string `json:"opponent"`   // 對手
-	IsHome     bool   `json:"isHome"`     // 是否主場
-	Score      string `json:"score"`      // 比分 (如: "111-103")
-	Result     string `json:"result"`     // W 或 L
+	Date       string  `json:"date"`       // 比賽日期
+	Time       string  `json:"time"`       // 比賽時間
+	Opponent   string  `json:"opponent"`   // 對手
+	VsIndicator string `json:"vsIndicator"` // "vs" 或 "@"
+	IsHome     bool    `json:"isHome"`     // 是否主場
+	Score      string  `json:"score"`      // 比分 (如: "111-103")
+	Result     string  `json:"result"`     // W 或 L (過盤結果)
+	Spread     string  `json:"spread"`     // 盤口 (如: "-5.5" 或 "無盤口")
+	HasSpread  bool    `json:"hasSpread"`  // 是否有盤口資料
 }
 
 // FullSchedule 完整賽季賽程

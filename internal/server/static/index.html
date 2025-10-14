@@ -353,7 +353,7 @@
         }
 
         .history-game {
-            padding: 8px;
+            padding: 10px;
             margin-top: 8px;
             background: white;
             border-radius: 6px;
@@ -361,6 +361,7 @@
             justify-content: space-between;
             align-items: center;
             border-left: 3px solid #ddd;
+            min-height: 60px;
         }
 
         .history-game.win {
@@ -373,23 +374,51 @@
 
         .history-game-info {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .history-game-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
         }
 
         .history-game-date {
             font-size: 0.85em;
             color: #666;
-            margin-bottom: 3px;
+            white-space: nowrap;
         }
 
         .history-game-opponent {
             font-weight: bold;
             color: #333;
+            font-size: 0.95em;
         }
 
         .history-game-score {
             font-size: 0.9em;
             font-weight: bold;
             color: #667eea;
+            margin-top: 2px;
+        }
+
+        .history-game-middle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-game-spread {
+            font-size: 0.75em;
+            color: #667eea;
+            font-weight: bold;
+            white-space: nowrap;
+            padding: 2px 6px;
+            background: #f0f0ff;
+            border-radius: 4px;
         }
 
         .history-game-result {
@@ -402,6 +431,7 @@
             font-weight: bold;
             font-size: 1.1em;
             color: white;
+            flex-shrink: 0;
         }
 
         .history-game.win .history-game-result {
@@ -965,11 +995,11 @@
                 return `
                     <div class="history-game ${resultClass}">
                         <div class="history-game-info">
-                            <div class="history-game-date">
-                                ${game.date}
+                            <div class="history-game-header">
+                                <span class="history-game-date">${game.date}</span>
                                 <span class="venue-badge">${venue}場</span>
+                                <span class="history-game-opponent">${game.vsIndicator} ${game.opponent}</span>
                             </div>
-                            <div class="history-game-opponent">vs ${game.opponent}</div>
                             <div class="history-game-score">${game.score}</div>
                         </div>
                         <div class="history-game-result">${game.result}</div>

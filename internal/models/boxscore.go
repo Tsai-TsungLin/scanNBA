@@ -7,16 +7,21 @@ type BoxscoreResponse struct {
 
 // BoxscoreGame 比賽數據
 type BoxscoreGame struct {
-	GameID     string         `json:"gameId"`
-	GameStatus int            `json:"gameStatus"`
-	HomeTeam   BoxscoreTeam   `json:"homeTeam"`
-	AwayTeam   BoxscoreTeam   `json:"awayTeam"`
+	GameID         string       `json:"gameId"`
+	GameStatus     int          `json:"gameStatus"`
+	GameStatusText string       `json:"gameStatusText"`
+	Period         int          `json:"period"`
+	GameClock      string       `json:"gameClock"`
+	HomeTeam       BoxscoreTeam `json:"homeTeam"`
+	AwayTeam       BoxscoreTeam `json:"awayTeam"`
 }
 
 // BoxscoreTeam 球隊數據
 type BoxscoreTeam struct {
 	TeamID   int              `json:"teamId"`
 	TeamName string           `json:"teamName"`
+	Score    int              `json:"score"`
+	Periods  []PeriodScore    `json:"periods"`
 	Players  []BoxscorePlayer `json:"players"`
 }
 

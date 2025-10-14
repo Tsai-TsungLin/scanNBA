@@ -89,48 +89,108 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 				isHome = true
 				opponent = game.AwayTeam.TeamCity + " " + game.AwayTeam.TeamName
 				score = fmt.Sprintf("%d-%d", game.HomeTeam.Score, game.AwayTeam.Score)
-				if game.HomeTeam.Score > game.AwayTeam.Score {
-					result = "W"
+
+				// 從盤口 API 取得該場比賽的開盤盤口
+				actualDiff := game.HomeTeam.Score - game.AwayTeam.Score // 實際分差（用於計算過盤）
+
+				homeSpreadValue, hasSpread := FetchHistoricalSpread(game.GameID)
+				var spread string
+
+				if hasSpread {
+					// 格式化盤口顯示: "主讓5.5" 或 "主受3.5"
+					spread = FormatSpreadDisplay(homeSpreadValue, true)
+
+					// 計算是否過盤
+					if CalculateSpreadResult(actualDiff, homeSpreadValue) {
+						result = "W" // 過盤
+					} else {
+						result = "L" // 沒過盤
+					}
 				} else {
-					result = "L"
+					spread = "無盤口"
+					// 沒有盤口資料，顯示實際勝負
+					if game.HomeTeam.Score > game.AwayTeam.Score {
+						result = "W"
+					} else {
+						result = "L"
+					}
 				}
 
 				// 轉換為中文隊名
 				opponentCN := models.TeamMap[opponent]
 				if opponentCN == "" {
-					opponentCN = opponent // 如果找不到對應，保持原文
+					opponentCN = opponent
 				}
 
+				// 分離日期和時間
+				gameDateTime := convertGameDateTime(game.GameDateTimeEst)
+				dateTimeParts := splitDateTime(gameDateTime)
+
 				games = append(games, models.GameResult{
-					Date:     convertGameDateTime(game.GameDateTimeEst),
-					Opponent: opponentCN,
-					IsHome:   isHome,
-					Score:    score,
-					Result:   result,
+					Date:        dateTimeParts[0],
+					Time:        dateTimeParts[1],
+					Opponent:    opponentCN,
+					VsIndicator: "vs",
+					IsHome:      isHome,
+					Score:       score,
+					Result:      result,
+					Spread:      spread,
+					HasSpread:   hasSpread,
 				})
 			} else if game.AwayTeam.TeamID == teamID {
 				// 客場比賽
 				isHome = false
 				opponent = game.HomeTeam.TeamCity + " " + game.HomeTeam.TeamName
 				score = fmt.Sprintf("%d-%d", game.AwayTeam.Score, game.HomeTeam.Score)
-				if game.AwayTeam.Score > game.HomeTeam.Score {
-					result = "W"
+
+				// 從盤口 API 取得該場比賽的開盤盤口（客隊盤口 = -主隊盤口）
+				actualDiff := game.AwayTeam.Score - game.HomeTeam.Score // 實際分差（用於計算過盤）
+
+				homeSpreadValue, hasSpread := FetchHistoricalSpread(game.GameID)
+				var spread string
+
+				if hasSpread {
+					// 客隊盤口 = -主隊盤口
+					awaySpreadValue := -homeSpreadValue
+					// 格式化盤口顯示: "客讓5.5" 或 "客受3.5"
+					spread = FormatSpreadDisplay(awaySpreadValue, false)
+
+					// 計算是否過盤
+					if CalculateSpreadResult(actualDiff, awaySpreadValue) {
+						result = "W" // 過盤
+					} else {
+						result = "L" // 沒過盤
+					}
 				} else {
-					result = "L"
+					spread = "無盤口"
+					// 沒有盤口資料，顯示實際勝負
+					if game.AwayTeam.Score > game.HomeTeam.Score {
+						result = "W"
+					} else {
+						result = "L"
+					}
 				}
 
 				// 轉換為中文隊名
 				opponentCN := models.TeamMap[opponent]
 				if opponentCN == "" {
-					opponentCN = opponent // 如果找不到對應，保持原文
+					opponentCN = opponent
 				}
 
+				// 分離日期和時間
+				gameDateTime := convertGameDateTime(game.GameDateTimeEst)
+				dateTimeParts := splitDateTime(gameDateTime)
+
 				games = append(games, models.GameResult{
-					Date:     convertGameDateTime(game.GameDateTimeEst),
-					Opponent: opponentCN,
-					IsHome:   isHome,
-					Score:    score,
-					Result:   result,
+					Date:        dateTimeParts[0],
+					Time:        dateTimeParts[1],
+					Opponent:    opponentCN,
+					VsIndicator: "@",
+					IsHome:      isHome,
+					Score:       score,
+					Result:      result,
+					Spread:      spread,
+					HasSpread:   hasSpread,
 				})
 			}
 		}
@@ -165,6 +225,29 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 		WinCount:    wins,
 		LossCount:   losses,
 	}, nil
+}
+
+// splitDateTime 分離日期和時間
+// 輸入: "2025/10/02 08:00:00"
+// 輸出: ["2025/10/02", "08:00"]
+func splitDateTime(datetime string) []string {
+	parts := []string{"", ""}
+
+	// 使用空格分割日期和時間
+	if len(datetime) > 10 {
+		parts[0] = datetime[:10] // 日期部分
+		if len(datetime) > 11 {
+			timePart := datetime[11:]
+			// 只取 HH:MM 部分
+			if len(timePart) >= 5 {
+				parts[1] = timePart[:5]
+			}
+		}
+	} else {
+		parts[0] = datetime
+	}
+
+	return parts
 }
 
 // GetTeamIDFromName 從球隊名稱獲取 TeamID（簡化版，實際應該從 API 獲取）

@@ -36,14 +36,31 @@ func FetchSchedule() (*models.NBAScoreboard, error) {
 	return &scoreboard, nil
 }
 
-// ConvertUTCToLocal 將 UTC 時間轉為本地顯示時間 (+8 時區)
-func ConvertUTCToLocal(utcTimeStr string) (string, error) {
-	t, err := time.Parse(time.RFC3339, utcTimeStr)
+// ConvertUTCToLocal 將 EST 時間轉為台北時間
+// NBA API 的 GameTimeUTC 欄位名稱有誤導性，實際是 EST 時間（UTC-4）
+func ConvertUTCToLocal(estTimeStr string) (string, error) {
+	// 解析時間（移除 Z，因為這不是真正的 UTC 時間）
+	estTimeNoZ := estTimeStr
+	if len(estTimeStr) > 0 && estTimeStr[len(estTimeStr)-1] == 'Z' {
+		estTimeNoZ = estTimeStr[:len(estTimeStr)-1]
+	}
+
+	// 解析為無時區的時間
+	t, err := time.Parse("2006-01-02T15:04:05", estTimeNoZ)
 	if err != nil {
 		return "", err
 	}
 
-	// 轉換到 UTC+8
-	localTime := t.Add(8 * time.Hour)
-	return localTime.Format("15:04"), nil
+	// 將這個時間視為 EST 時區（UTC-4 夏令時）
+	estLocation := time.FixedZone("EST", -4*60*60)
+	tEST := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, estLocation)
+
+	// 轉換為台北時區 (UTC+8)
+	loc, err := time.LoadLocation("Asia/Taipei")
+	if err != nil {
+		loc = time.FixedZone("CST", 8*60*60)
+	}
+	tTaipei := tEST.In(loc)
+
+	return tTaipei.Format("15:04"), nil
 }

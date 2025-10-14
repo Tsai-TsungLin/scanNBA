@@ -10,6 +10,7 @@ import (
 )
 
 // GetTodayGames 取得今日比賽資料（供 API 使用）
+// 台北時間 12:00 之後會顯示明天的比賽
 func GetTodayGames() (*models.APIResponse, error) {
 	// 平行抓取三個資料源
 	var (
@@ -23,10 +24,25 @@ func GetTodayGames() (*models.APIResponse, error) {
 
 	wg.Add(3)
 
-	// 1. 抓取賽程
+	// 1. 抓取賽程（根據時間決定顯示今天還是昨天/明天）
 	go func() {
 		defer wg.Done()
-		sb, err := crawler.FetchSchedule()
+
+		// 判斷要顯示哪一天的比賽
+		loc, _ := time.LoadLocation("Asia/Taipei")
+		now := time.Now().In(loc)
+
+		var targetDate time.Time
+		// 台北時間 14:00 之前顯示昨天，14:00 之後顯示今天
+		// 這樣可以確保早上還能看到昨晚/今早的比賽
+		if now.Hour() < 14 {
+			targetDate = now.AddDate(0, 0, -1) // 昨天
+		} else {
+			targetDate = now // 今天
+		}
+
+		// 從完整賽季 API 取得比賽
+		sb, err := crawler.FetchScheduleForDate(targetDate)
 		if err != nil {
 			mu.Lock()
 			errors = append(errors, fmt.Errorf("賽程錯誤: %w", err))
@@ -132,12 +148,12 @@ func buildGameInfo(game *models.Game, oddsMap map[string]models.SpreadInfo, inju
 	if spread, ok := oddsMap[game.GameID]; ok && spread.Found {
 		spreadDisplay.HasData = true
 
-		if game.GameStatus == 1 { // 未開始：顯示開盤盤口
+		if game.GameStatus == 1 { // 未開始：顯示開盤和當前盤口
 			spreadDisplay.Opening = fmt.Sprintf("%.1f", spread.HomeOpeningSpread)
-			spreadDisplay.Current = fmt.Sprintf("%.1f", spread.HomeOpeningSpread)
-		} else { // 進行中或已結束：顯示即時盤口
+			spreadDisplay.Current = spread.HomeSpread // 當前盤口
+		} else { // 進行中或已結束：顯示開盤和最後盤口
 			// 已結束時，current 就是開打前的最後盤口
-			spreadDisplay.Opening = spread.HomeSpread
+			spreadDisplay.Opening = fmt.Sprintf("%.1f", spread.HomeOpeningSpread)
 			spreadDisplay.Current = spread.HomeSpread
 		}
 	}

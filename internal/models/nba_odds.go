@@ -15,7 +15,7 @@ type OddsGame struct {
 
 // OddsMarket 賠率市場
 type OddsMarket struct {
-	Key        string      `json:"key"`
+	Name       string      `json:"name"`
 	OddsTypeID int         `json:"odds_type_id"`
 	Books      []Bookmaker `json:"books"`
 }
@@ -48,9 +48,9 @@ type SpreadInfo struct {
 func (og *OddsGame) GetSupermatchSpread() SpreadInfo {
 	result := SpreadInfo{Found: false}
 
-	// 找到 spread market (odds_type_id = 4)
+	// 找到 spread market (name = "spread")
 	for _, market := range og.Markets {
-		if market.OddsTypeID == 4 {
+		if market.Name == "spread" {
 			// 找 Supermatch bookmaker (id: "sr:book:818")
 			for _, bookmaker := range market.Books {
 				if bookmaker.ID == "sr:book:818" {
