@@ -11,15 +11,19 @@ type TeamHistory struct {
 
 // GameResult 單場比賽結果
 type GameResult struct {
-	Date       string  `json:"date"`       // 比賽日期
-	Time       string  `json:"time"`       // 比賽時間
-	Opponent   string  `json:"opponent"`   // 對手
-	VsIndicator string `json:"vsIndicator"` // "vs" 或 "@"
-	IsHome     bool    `json:"isHome"`     // 是否主場
-	Score      string  `json:"score"`      // 比分 (如: "111-103")
-	Result     string  `json:"result"`     // W 或 L (過盤結果)
-	Spread     string  `json:"spread"`     // 盤口 (如: "-5.5" 或 "無盤口")
-	HasSpread  bool    `json:"hasSpread"`  // 是否有盤口資料
+	GameID      string  `json:"gameId"`      // 比賽 ID（用於跳轉）
+	GameDate    string  `json:"gameDate"`    // NBA 原始比賽日期（美國時間，用於跳轉查詢）
+	Date        string  `json:"date"`        // 比賽日期（台北時間，用於顯示）
+	Time        string  `json:"time"`        // 比賽時間
+	Opponent    string  `json:"opponent"`    // 對手
+	VsIndicator string  `json:"vsIndicator"` // "vs" 或 "@"
+	IsHome      bool    `json:"isHome"`      // 是否主場
+	Score       string  `json:"score"`       // 比分 (如: "111-103")
+	GameResult  string  `json:"gameResult"`  // W 或 L (實際勝負)
+	SpreadResult string `json:"spreadResult"` // W 或 L (過盤結果)
+	Result      string  `json:"result"`      // W 或 L (過盤結果，保留向後相容)
+	Spread      string  `json:"spread"`      // 盤口 (如: "-5.5" 或 "無盤口")
+	HasSpread   bool    `json:"hasSpread"`   // 是否有盤口資料
 }
 
 // FullSchedule 完整賽季賽程

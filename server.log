@@ -1,1 +1,4 @@
-2025/10/14 14:28:51 🏀 NBA Scanner 啟動於 http://localhost:8081
+2025/10/16 14:42:02 🏀 NBA Scanner 啟動於 http://localhost:8081
+2025/10/16 14:42:23 抓取 titan007 過盤資料: https://nba.titan007.com/jsData/letGoal/24-25/l1.js?version=2025101614
+2025/10/16 14:42:23 成功快取 titan007 過盤資料，共 30 支球隊
+2025/10/16 14:45:29 警告：未從 titan007 獲取到 Guangzhou Loong-Lions 的過盤資料

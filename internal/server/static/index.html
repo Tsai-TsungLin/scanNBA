@@ -442,6 +442,27 @@
             background: #dc3545;
         }
 
+        .special-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+            margin-left: 5px;
+            background: #ffd54f;
+            color: #333;
+        }
+
+        .history-game {
+            cursor: pointer;
+        }
+
+        .history-game:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+            transition: all 0.2s;
+        }
+
         .venue-badge {
             display: inline-block;
             background: #667eea;
@@ -875,16 +896,132 @@
         }
 
         @media (max-width: 768px) {
-            .injuries-section {
-                grid-template-columns: 1fr;
+            body {
+                padding: 10px;
             }
 
             .header h1 {
                 font-size: 1.8em;
             }
 
+            .header .date {
+                font-size: 1em;
+            }
+
             .matchup {
-                font-size: 1.2em;
+                font-size: 1.1em;
+            }
+
+            .spread-preview {
+                font-size: 0.8em;
+            }
+
+            .game-card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .injuries-section {
+                grid-template-columns: 1fr;
+            }
+
+            .team-history-section {
+                grid-template-columns: 1fr;
+            }
+
+            .injury-box, .team-history {
+                padding: 12px;
+            }
+
+            /* 表格橫向滾動 */
+            .player-stats-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .player-stats-table {
+                min-width: 500px;
+            }
+
+            .period-scores-table table {
+                font-size: 0.7em;
+            }
+
+            .betting-results table {
+                font-size: 0.7em;
+            }
+
+            /* 日曆選擇器優化 */
+            .calendar-dropdown {
+                min-width: 280px;
+                max-width: 90vw;
+            }
+
+            .date-selector {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .date-selector button {
+                padding: 8px 12px;
+                font-size: 0.85em;
+            }
+
+            .calendar-input {
+                padding: 8px 12px;
+                font-size: 0.9em;
+                min-width: 130px;
+            }
+
+            /* 增加觸摸區域 */
+            .game-header {
+                padding: 10px;
+                min-height: 60px;
+            }
+
+            .history-game {
+                padding: 8px;
+                min-height: 50px;
+            }
+
+            .record-item {
+                width: 28px;
+                height: 28px;
+                font-size: 0.85em;
+            }
+
+            /* 優化比賽資訊顯示 */
+            .spread-info .values {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .spread-info.has-periods .values {
+                align-items: center;
+            }
+
+            .game-time {
+                font-size: 1em;
+            }
+
+            /* Tab 按鈕優化 */
+            .tab-button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+
+            /* 歷史比賽詳情 */
+            .history-game-header {
+                font-size: 0.9em;
+            }
+
+            .history-game-score {
+                font-size: 0.85em;
+            }
+
+            .venue-badge, .special-badge {
+                font-size: 0.65em;
+                padding: 1px 4px;
             }
         }
     </style>
@@ -1300,28 +1437,45 @@
                 return '';
             }
 
-            // 簡化顯示：只顯示 W/L
+            // 簡化顯示：只顯示 W/L（過盤結果）
             const records = history.recentGames.map(game => {
-                const resultClass = game.result === 'W' ? 'win' : 'loss';
-                return `<div class="record-item ${resultClass}">${game.result}</div>`;
+                const resultClass = game.spreadResult === 'W' ? 'win' : 'loss';
+                return `<div class="record-item ${resultClass}">${game.spreadResult}</div>`;
             }).join('');
 
             // 詳細顯示：顯示對戰隊伍等資訊
             const detailGames = history.recentGames.map(game => {
-                const resultClass = game.result === 'W' ? 'win' : 'loss';
+                const spreadResultClass = game.spreadResult === 'W' ? 'win' : 'loss';
                 const venue = game.isHome ? '主' : '客';
 
+                // 判斷是否為「贏球輸盤」或「輸球贏盤」（統一用黃色標記）
+                let specialBadge = '';
+                if (game.gameResult !== game.spreadResult) {
+                    if (game.gameResult === 'W' && game.spreadResult === 'L') {
+                        specialBadge = '<span class="special-badge">贏球輸盤</span>';
+                    } else if (game.gameResult === 'L' && game.spreadResult === 'W') {
+                        specialBadge = '<span class="special-badge">輸球贏盤</span>';
+                    }
+                }
+
+                // 使用 NBA 原始日期進行跳轉（gameDate 已經是 "2025-10-07" 格式）
+                const queryDate = game.gameDate || game.date.replace(/\//g, '-');
+
                 return `
-                    <div class="history-game ${resultClass}">
+                    <div class="history-game ${spreadResultClass}"
+                         data-game-id="${game.gameId}"
+                         data-game-date="${queryDate}"
+                         onclick="navigateToHistoricalGame('${game.gameId}', '${queryDate}', event)">
                         <div class="history-game-info">
                             <div class="history-game-header">
                                 <span class="history-game-date">${game.date}</span>
                                 <span class="venue-badge">${venue}場</span>
                                 <span class="history-game-opponent">${game.vsIndicator} ${game.opponent}</span>
+                                ${specialBadge}
                             </div>
                             <div class="history-game-score">${game.score}</div>
                         </div>
-                        <div class="history-game-result">${game.result}</div>
+                        <div class="history-game-result">${game.spreadResult}</div>
                     </div>
                 `;
             }).join('');
@@ -1724,6 +1878,60 @@
 
             // Load games for selected date
             loadGames(dateStr);
+        }
+
+        // 跳轉到歷史比賽並自動展開
+        async function navigateToHistoricalGame(gameId, gameDate, event) {
+            // 阻止事件冒泡（避免觸發其他點擊事件）
+            event.stopPropagation();
+
+            // 1. 跳轉到該日期
+            selectedDate = gameDate;
+            currentDate = gameDate;
+
+            // Update display text
+            const dateObj = new Date(gameDate);
+            const displayText = `${dateObj.getFullYear()}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')}`;
+            document.getElementById('selectedDateText').textContent = displayText;
+
+            // 2. 載入該日期的比賽資料
+            await loadGames(gameDate);
+
+            // 3. 等待 DOM 渲染完成後，找到並展開該比賽
+            setTimeout(() => {
+                // 找到所有比賽卡片
+                const gameCards = document.querySelectorAll('.game-card');
+
+                // 遍歷所有比賽，找到匹配的 gameId
+                gameCards.forEach(card => {
+                    // 從卡片內容中查找 gameId（透過近期戰績的 data-game-id）
+                    const historyGames = card.querySelectorAll('.history-game');
+                    let isTargetGame = false;
+
+                    // 檢查這張卡片的戰績中是否包含目標 gameId
+                    historyGames.forEach(histGame => {
+                        if (histGame.dataset.gameId === gameId) {
+                            isTargetGame = true;
+                        }
+                    });
+
+                    // 如果找到目標比賽，展開它並捲動到該位置
+                    if (isTargetGame) {
+                        // 展開比賽卡片（移除 collapsed class）
+                        card.classList.remove('collapsed');
+
+                        // 捲動到該比賽位置
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // 高亮顯示該比賽（添加臨時動畫效果）
+                        card.style.backgroundColor = '#fff3cd';
+                        setTimeout(() => {
+                            card.style.backgroundColor = '';
+                            card.style.transition = 'background-color 1s ease';
+                        }, 2000);
+                    }
+                });
+            }, 300); // 給予 300ms 讓 DOM 渲染完成
         }
 
         // Close calendar when clicking outside
