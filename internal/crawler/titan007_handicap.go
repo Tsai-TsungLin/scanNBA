@@ -66,8 +66,29 @@ type HandicapGame struct {
 	SpreadResult int     // 1=贏盤, 2=走盤, 3=輸盤
 }
 
-// FetchTitan007TeamHandicap 從 HandicapDetail 頁面抓取球隊盤口戰績
+// HandicapResultWithSpread 盤口結果（含盤口數值）
+type HandicapResultWithSpread struct {
+	Result      string  // "W" 或 "L"
+	SpreadValue float64 // 盤口數值（從查詢球隊的角度）
+}
+
+// FetchTitan007TeamHandicap 從 HandicapDetail 頁面抓取球隊盤口戰績（只返回 W/L）
 func FetchTitan007TeamHandicap(teamNameEN string, limit int) ([]string, error) {
+	results, err := FetchTitan007TeamHandicapWithSpread(teamNameEN, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// 只返回 W/L 結果
+	resultStrings := make([]string, len(results))
+	for i, r := range results {
+		resultStrings[i] = r.Result
+	}
+	return resultStrings, nil
+}
+
+// FetchTitan007TeamHandicapWithSpread 從 HandicapDetail 頁面抓取球隊盤口戰績（含盤口數值）
+func FetchTitan007TeamHandicapWithSpread(teamNameEN string, limit int) ([]HandicapResultWithSpread, error) {
 	// 先從 letGoal API 取得 TeamID 映射
 	teamIDMap, err := fetchTeamIDMap()
 	if err != nil {
@@ -100,20 +121,50 @@ func FetchTitan007TeamHandicap(teamNameEN string, limit int) ([]string, error) {
 	}
 
 	// 先收集結果（此時順序是由舊到新）
-	temp := make([]string, 0, limit)
+	temp := make([]HandicapResultWithSpread, 0, limit)
 	for i := startIdx; i < len(games); i++ {
 		game := games[i]
-		if game.SpreadResult == 1 {
-			temp = append(temp, "W") // 贏盤
-		} else if game.SpreadResult == 3 {
-			temp = append(temp, "L") // 輸盤
-		} else {
-			temp = append(temp, "W") // 走盤當作平手，這裡簡化為 W
+
+		// Titan007 HandicapDetail 頁面的 Spread 欄位規則：
+		//
+		// 當查詢球隊是「客隊」時：
+		//   - 負數 = 讓分（例如 -6.5 表示客隊讓 6.5 分）
+		//   - 正數 = 受讓（例如 +3.5 表示客隊受讓 3.5 分）
+		//
+		// 當查詢球隊是「主隊」時：符號相反！
+		//   - 正數 = 讓分（例如 +6.5 表示主隊讓 6.5 分）
+		//   - 負數 = 受讓（例如 -3.5 表示主隊受讓 3.5 分）
+		//
+		// 為了統一顯示格式（負數=讓分，正數=受讓），需要根據主客場調整：
+		//   - 客場：直接使用 Spread 值
+		//   - 主場：符號取反
+
+		spreadValue := game.Spread
+		if game.HomeTeamID == teamID {
+			// 查詢的球隊是主隊，符號需要取反
+			// 例如：Spread=+6.5（主隊讓 6.5）→ 顯示 -6.5
+			//       Spread=-3.5（主隊受讓 3.5）→ 顯示 +3.5
+			spreadValue = -spreadValue
 		}
+		// 如果查詢球隊是客隊，直接使用 Spread 值
+
+		var result string
+		if game.SpreadResult == 1 {
+			result = "W" // 贏盤
+		} else if game.SpreadResult == 3 {
+			result = "L" // 輸盤
+		} else {
+			result = "W" // 走盤當作平手，這裡簡化為 W
+		}
+
+		temp = append(temp, HandicapResultWithSpread{
+			Result:      result,
+			SpreadValue: spreadValue,
+		})
 	}
 
 	// 反轉順序，使其由新到舊（配合 history.go 的 games 排序）
-	results := make([]string, len(temp))
+	results := make([]HandicapResultWithSpread, len(temp))
 	for i := range temp {
 		results[i] = temp[len(temp)-1-i]
 	}
@@ -230,6 +281,22 @@ func GetTeamHandicapSpreads(teamName string, limit int) ([]string, bool) {
 	}
 
 	spreads, err := FetchTitan007TeamHandicap(teamName, limit)
+	if err != nil {
+		log.Printf("抓取 titan007 盤口戰績失敗 (%s): %v", teamName, err)
+		return nil, false
+	}
+
+	return spreads, true
+}
+
+// GetTeamHandicapSpreadsWithValues 獲取指定球隊的近N場盤口結果（含盤口數值）
+func GetTeamHandicapSpreadsWithValues(teamName string, limit int) ([]HandicapResultWithSpread, bool) {
+	// 處理 LA Clippers 特殊情況
+	if teamName == "Los Angeles Clippers" {
+		teamName = "LA Clippers"
+	}
+
+	spreads, err := FetchTitan007TeamHandicapWithSpread(teamName, limit)
 	if err != nil {
 		log.Printf("抓取 titan007 盤口戰績失敗 (%s): %v", teamName, err)
 		return nil, false

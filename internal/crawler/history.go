@@ -87,8 +87,8 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 		}
 	}
 
-	// 從 titan007 HandicapDetail 頁面獲取近5場過盤結果
-	titan007Spreads, hasTitan007 := GetTeamHandicapSpreads(teamNameEN, limit)
+	// 從 titan007 HandicapDetail 頁面獲取近5場過盤結果（含盤口數值）
+	titan007Spreads, hasTitan007 := GetTeamHandicapSpreadsWithValues(teamNameEN, limit)
 	if !hasTitan007 {
 		log.Printf("警告：未從 titan007 獲取到 %s 的過盤資料", teamNameEN)
 	}
@@ -108,10 +108,12 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 			var score string
 
 			if game.HomeTeam.TeamID == teamID {
-				// 主場比賽
+				// 主場比賽（查詢球隊是主隊）
 				isHome = true
 				opponent = game.AwayTeam.TeamCity + " " + game.AwayTeam.TeamName
-				score = fmt.Sprintf("%d-%d", game.HomeTeam.Score, game.AwayTeam.Score)
+				// 顯示格式：客隊分數-主隊分數（標準格式）
+				// 查詢球隊是主隊，所以：對手(客隊)分數 - 查詢球隊(主隊)分數
+				score = fmt.Sprintf("%d-%d", game.AwayTeam.Score, game.HomeTeam.Score)
 
 				// 計算實際勝負
 				var gameResult string
@@ -151,9 +153,11 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 					HasSpread:    false,
 				})
 			} else if game.AwayTeam.TeamID == teamID {
-				// 客場比賽
+				// 客場比賽（查詢球隊是客隊）
 				isHome = false
 				opponent = game.HomeTeam.TeamCity + " " + game.HomeTeam.TeamName
+				// 顯示格式：客隊分數-主隊分數（標準格式）
+				// 查詢球隊是客隊，所以：查詢球隊(客隊)分數 - 對手(主隊)分數
 				score = fmt.Sprintf("%d-%d", game.AwayTeam.Score, game.HomeTeam.Score)
 
 				// 計算實際勝負
@@ -214,10 +218,17 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 	// titan007Spreads 已經是按時間順序（最新的在 index 0）
 	for i := range games {
 		if hasTitan007 && i < len(titan007Spreads) {
-			games[i].SpreadResult = titan007Spreads[i]
-			games[i].Spread = "有盤口"
+			spread := titan007Spreads[i]
+			games[i].SpreadResult = spread.Result
+			games[i].Result = spread.Result
 			games[i].HasSpread = true
-			games[i].Result = titan007Spreads[i]
+
+			// 格式化盤口數值顯示
+			if spread.SpreadValue > 0 {
+				games[i].Spread = fmt.Sprintf("+%.1f", spread.SpreadValue)
+			} else {
+				games[i].Spread = fmt.Sprintf("%.1f", spread.SpreadValue)
+			}
 		} else {
 			games[i].SpreadResult = games[i].GameResult
 			games[i].Spread = "無盤口"

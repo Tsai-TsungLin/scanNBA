@@ -1551,6 +1551,7 @@
                             </div>
                             <div class="history-game-score">${game.score}</div>
                         </div>
+                        ${game.hasSpread && game.spread !== '無盤口' ? `<div class="history-game-spread">${game.spread}</div>` : ''}
                         <div class="history-game-result">${game.spreadResult}</div>
                     </div>
                 `;
