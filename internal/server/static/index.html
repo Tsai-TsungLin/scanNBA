@@ -147,6 +147,15 @@
             white-space: nowrap;
         }
 
+        /* 預設顯示完整文字 */
+        .spread-desktop {
+            display: inline;
+        }
+
+        .spread-mobile {
+            display: none;
+        }
+
         .spread-arrow {
             margin: 0 10px;
             font-size: 1.2em;
@@ -933,22 +942,55 @@
                 padding: 12px;
             }
 
+            /* 確保 injury-box 可以容納可滾動的表格 */
+            .injury-box {
+                overflow-x: visible;
+            }
+
             /* 表格橫向滾動 */
             .player-stats-wrapper {
-                overflow-x: auto;
+                overflow-x: scroll !important;
                 -webkit-overflow-scrolling: touch;
+                display: block !important;
+                width: 100%;
             }
 
             .player-stats-table {
-                min-width: 500px;
+                min-width: 450px;
+                font-size: 0.85em;
+                display: table !important;
+            }
+
+            .player-stats-table th {
+                padding: 6px 4px;
+                font-size: 0.85em;
+            }
+
+            .player-stats-table td {
+                padding: 6px 4px;
+            }
+
+            .player-name-cell {
+                width: 120px;
+                font-size: 0.9em;
             }
 
             .period-scores-table table {
-                font-size: 0.7em;
+                font-size: 0.5em;
+            }
+
+            .period-scores-table th,
+            .period-scores-table td {
+                padding: 2px 4px;
             }
 
             .betting-results table {
-                font-size: 0.7em;
+                font-size: 0.5em;
+            }
+
+            .betting-results th,
+            .betting-results td {
+                padding: 2px 4px;
             }
 
             /* 日曆選擇器優化 */
@@ -985,19 +1027,53 @@
             }
 
             .record-item {
-                width: 28px;
-                height: 28px;
-                font-size: 0.85em;
+                width: 24px;
+                height: 24px;
+                font-size: 0.75em;
             }
 
             /* 優化比賽資訊顯示 */
             .spread-info .values {
                 flex-direction: column;
                 gap: 10px;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
             .spread-info.has-periods .values {
                 align-items: center;
+            }
+
+            /* 縮小盤口資訊字體 */
+            .spread-basic {
+                font-size: 0.7em;
+                word-break: break-word;
+            }
+
+            /* 手機版隱藏完整文字，只顯示簡化版 */
+            .spread-mobile {
+                display: inline;
+            }
+
+            .spread-desktop {
+                display: none;
+            }
+
+            /* 縮小歷史比賽的 W/L 圓圈 */
+            .history-game-result {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9em;
+            }
+
+            /* 優化隊伍名稱顯示 */
+            .period-scores-table td:first-child {
+                font-size: 0.9em;
+                max-width: 40px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
 
             .game-time {
@@ -1567,7 +1643,8 @@
                                 <div class="label">${spreadLabel}</div>
                                 <div class="values">
                                     <div class="spread-basic">
-                                        開盤 ${game.spread.opening} → 當前 ${game.spread.current}
+                                        <span class="spread-desktop">開盤 ${game.spread.opening} → 當前 ${game.spread.current}</span>
+                                        <span class="spread-mobile">${game.spread.opening} → ${game.spread.current}</span>
                                     </div>
                                 </div>
                             </div>

@@ -1,4 +1,47 @@
-2025/10/16 14:42:02 🏀 NBA Scanner 啟動於 http://localhost:8081
-2025/10/16 14:42:23 抓取 titan007 過盤資料: https://nba.titan007.com/jsData/letGoal/24-25/l1.js?version=2025101614
-2025/10/16 14:42:23 成功快取 titan007 過盤資料，共 30 支球隊
-2025/10/16 14:45:29 警告：未從 titan007 獲取到 Guangzhou Loong-Lions 的過盤資料
+2025/10/17 11:47:36 🏀 NBA Scanner 啟動於 http://localhost:8081
+2025/10/17 11:48:03 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=6&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:03 成功抓取 4 場盤口戰績
+2025/10/17 11:48:04 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=11&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:04 成功抓取 4 場盤口戰績
+2025/10/17 11:48:04 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=13&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:04 成功抓取 4 場盤口戰績
+2025/10/17 11:48:04 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=21&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:04 成功抓取 4 場盤口戰績
+2025/10/17 11:48:04 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=20&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:04 成功抓取 4 場盤口戰績
+2025/10/17 11:48:04 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=25&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:04 成功抓取 4 場盤口戰績
+2025/10/17 11:48:04 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=9&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:04 成功抓取 4 場盤口戰績
+2025/10/17 11:48:04 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=8&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:05 成功抓取 3 場盤口戰績
+2025/10/17 11:48:05 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=14&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:05 成功抓取 5 場盤口戰績
+2025/10/17 11:48:05 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=19&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:05 成功抓取 5 場盤口戰績
+2025/10/17 11:48:34 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=27&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:34 成功抓取 4 場盤口戰績
+2025/10/17 11:48:34 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=16&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:34 成功抓取 4 場盤口戰績
+2025/10/17 11:48:35 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=12&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:35 成功抓取 4 場盤口戰績
+2025/10/17 11:48:35 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=28&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:35 成功抓取 5 場盤口戰績
+2025/10/17 11:48:35 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=23&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:35 成功抓取 4 場盤口戰績
+2025/10/17 11:48:35 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=26&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:35 成功抓取 4 場盤口戰績
+2025/10/17 11:48:36 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=1&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:36 成功抓取 5 場盤口戰績
+2025/10/17 11:48:46 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=3&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:47 成功抓取 5 場盤口戰績
+2025/10/17 11:48:47 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=10&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:47 成功抓取 3 場盤口戰績
+2025/10/17 11:48:47 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=18&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:47 成功抓取 4 場盤口戰績
+2025/10/17 11:48:47 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=5&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:47 成功抓取 4 場盤口戰績
+2025/10/17 11:48:48 抓取 titan007 盤口戰績失敗 (Guangzhou Loong-Lions): 找不到球隊: Guangzhou Loong-Lions
+2025/10/17 11:48:48 警告：未從 titan007 獲取到 Guangzhou Loong-Lions 的過盤資料
+2025/10/17 11:48:48 抓取 titan007 盤口戰績: https://nba.titan007.com/cn/Team/HandicapDetail.aspx?sclassid=1&teamid=17&matchseason=2025-2026&halfOrAll=0
+2025/10/17 11:48:48 成功抓取 4 場盤口戰績

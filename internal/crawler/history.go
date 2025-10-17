@@ -87,8 +87,8 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 		}
 	}
 
-	// 從 titan007 獲取近5場過盤結果
-	titan007Spreads, hasTitan007 := GetTeamSpreads(teamNameEN)
+	// 從 titan007 HandicapDetail 頁面獲取近5場過盤結果
+	titan007Spreads, hasTitan007 := GetTeamHandicapSpreads(teamNameEN, limit)
 	if !hasTitan007 {
 		log.Printf("警告：未從 titan007 獲取到 %s 的過盤資料", teamNameEN)
 	}
@@ -106,7 +106,6 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 			var isHome bool
 			var opponent string
 			var score string
-			var result string
 
 			if game.HomeTeam.TeamID == teamID {
 				// 主場比賽
@@ -122,25 +121,6 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 					gameResult = "L"
 				}
 
-				// 使用 titan007 的過盤結果（按時間順序，最新的在前）
-				var spreadResult string
-				var spread string
-				var hasSpread bool
-
-				// 當前收集的比賽數量對應 titan007Spreads 的 index
-				currentIndex := len(games)
-				if hasTitan007 && currentIndex < len(titan007Spreads) {
-					spreadResult = titan007Spreads[currentIndex]
-					spread = "有盤口"
-					hasSpread = true
-					result = spreadResult
-				} else {
-					spread = "無盤口"
-					spreadResult = gameResult // 無盤口時，過盤結果等於實際勝負
-					result = gameResult
-					hasSpread = false
-				}
-
 				// 轉換為中文隊名
 				opponentCN := models.TeamMap[opponent]
 				if opponentCN == "" {
@@ -155,19 +135,20 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 				nbaGameDate := extractNBAGameDate(game.GameDateTimeEst)
 
 				games = append(games, models.GameResult{
-					GameID:       game.GameID,
-					GameDate:     nbaGameDate,
-					Date:         dateTimeParts[0],
-					Time:         dateTimeParts[1],
-					Opponent:     opponentCN,
-					VsIndicator:  "vs",
-					IsHome:       isHome,
-					Score:        score,
-					GameResult:   gameResult,
-					SpreadResult: spreadResult,
-					Result:       result,
-					Spread:       spread,
-					HasSpread:    hasSpread,
+					GameID:      game.GameID,
+					GameDate:    nbaGameDate,
+					Date:        dateTimeParts[0],
+					Time:        dateTimeParts[1],
+					Opponent:    opponentCN,
+					VsIndicator: "vs",
+					IsHome:      isHome,
+					Score:       score,
+					GameResult:  gameResult,
+					// 過盤結果稍後補上（排序後）
+					SpreadResult: "",
+					Result:       "",
+					Spread:       "",
+					HasSpread:    false,
 				})
 			} else if game.AwayTeam.TeamID == teamID {
 				// 客場比賽
@@ -183,25 +164,6 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 					gameResult = "L"
 				}
 
-				// 使用 titan007 的過盤結果（按時間順序，最新的在前）
-				var spreadResult string
-				var spread string
-				var hasSpread bool
-
-				// 當前收集的比賽數量對應 titan007Spreads 的 index
-				currentIndex := len(games)
-				if hasTitan007 && currentIndex < len(titan007Spreads) {
-					spreadResult = titan007Spreads[currentIndex]
-					spread = "有盤口"
-					hasSpread = true
-					result = spreadResult
-				} else {
-					spread = "無盤口"
-					spreadResult = gameResult // 無盤口時，過盤結果等於實際勝負
-					result = gameResult
-					hasSpread = false
-				}
-
 				// 轉換為中文隊名
 				opponentCN := models.TeamMap[opponent]
 				if opponentCN == "" {
@@ -216,19 +178,20 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 				nbaGameDate := extractNBAGameDate(game.GameDateTimeEst)
 
 				games = append(games, models.GameResult{
-					GameID:       game.GameID,
-					GameDate:     nbaGameDate,
-					Date:         dateTimeParts[0],
-					Time:         dateTimeParts[1],
-					Opponent:     opponentCN,
-					VsIndicator:  "@",
-					IsHome:       isHome,
-					Score:        score,
-					GameResult:   gameResult,
-					SpreadResult: spreadResult,
-					Result:       result,
-					Spread:       spread,
-					HasSpread:    hasSpread,
+					GameID:      game.GameID,
+					GameDate:    nbaGameDate,
+					Date:        dateTimeParts[0],
+					Time:        dateTimeParts[1],
+					Opponent:    opponentCN,
+					VsIndicator: "@",
+					IsHome:      isHome,
+					Score:       score,
+					GameResult:  gameResult,
+					// 過盤結果稍後補上（排序後）
+					SpreadResult: "",
+					Result:       "",
+					Spread:       "",
+					HasSpread:    false,
 				})
 			}
 		}
@@ -236,14 +199,31 @@ func FetchTeamHistory(teamID int, limit int) (*models.TeamHistory, error) {
 
 	// 按日期排序（最新的在前）
 	sort.Slice(games, func(i, j int) bool {
-		dateI, _ := time.Parse("2006/01/02 15:04:05", games[i].Date)
-		dateJ, _ := time.Parse("2006/01/02 15:04:05", games[j].Date)
+		// Date 欄位格式為 "2025/10/02"，不包含時間
+		dateI, _ := time.Parse("2006/01/02", games[i].Date)
+		dateJ, _ := time.Parse("2006/01/02", games[j].Date)
 		return dateI.After(dateJ)
 	})
 
 	// 只取最近 N 場
 	if len(games) > limit {
 		games = games[:limit]
+	}
+
+	// 排序後，補上 titan007 的過盤結果
+	// titan007Spreads 已經是按時間順序（最新的在 index 0）
+	for i := range games {
+		if hasTitan007 && i < len(titan007Spreads) {
+			games[i].SpreadResult = titan007Spreads[i]
+			games[i].Spread = "有盤口"
+			games[i].HasSpread = true
+			games[i].Result = titan007Spreads[i]
+		} else {
+			games[i].SpreadResult = games[i].GameResult
+			games[i].Spread = "無盤口"
+			games[i].HasSpread = false
+			games[i].Result = games[i].GameResult
+		}
 	}
 
 	// 計算勝負場數

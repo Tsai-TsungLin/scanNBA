@@ -84,7 +84,7 @@ func FetchTitan007Spreads() (map[string][]string, error) {
 	return spreadMap, nil
 }
 
-// parseTitan007Spreads 解析 titan007 的 JS 資料（使用舊的正則表達式方法）
+// parseTitan007Spreads 解析 titan007 的 JS 資料
 func parseTitan007Spreads(jsData string) (map[string][]string, error) {
 	result := make(map[string][]string)
 
@@ -103,23 +103,26 @@ func parseTitan007Spreads(jsData string) (map[string][]string, error) {
 
 	// 建立 TeamNumber -> TeamName 的映射
 	matchMap := make(map[int64]string)
-	match := regexp.MustCompile(",")
 
 	for i := range frontsideTeam {
 		TeamData := Team[frontsideTeam[i][0]:frontsideTeam[i][1]]
-		matchR := match.FindAllStringSubmatchIndex(TeamData, -1)
+		// 用字串分割（更可靠）
+		parts := regexp.MustCompile(",").Split(TeamData[1:len(TeamData)-1], -1)
 
-		if len(matchR) < 4 {
+		if len(parts) < 4 {
 			continue
 		}
 
-		TeamNumber, err := strconv.ParseInt(TeamData[1:matchR[0][0]], 10, 64)
+		TeamNumber, err := strconv.ParseInt(parts[0], 10, 64)
 		if err != nil {
 			continue
 		}
 
-		// 提取球隊名稱（英文名稱在第3個逗號後）
-		teamName := TeamData[matchR[2][1]+1 : matchR[3][0]-1]
+		// 球隊名稱在第3個位置（index 3）
+		teamName := parts[3]
+		if len(teamName) > 0 && teamName[0] == '\'' && teamName[len(teamName)-1] == '\'' {
+			teamName = teamName[1 : len(teamName)-1]
+		}
 		matchMap[TeamNumber] = teamName
 	}
 
@@ -130,40 +133,32 @@ func parseTitan007Spreads(jsData string) (map[string][]string, error) {
 	// 解析每支球隊的過盤資料
 	for i := range frontsidedata {
 		winPercentData := data[frontsidedata[i][0]:frontsidedata[i][1]]
-		matchR := match.FindAllStringSubmatchIndex(winPercentData, -1)
 
-		if len(matchR) < 16 {
+		// 用字串分割（更可靠）
+		parts := regexp.MustCompile(",").Split(winPercentData[1:len(winPercentData)-1], -1)
+
+		if len(parts) < 17 {
 			continue
 		}
 
-		TeamNumber, err := strconv.ParseInt(winPercentData[matchR[0][0]+1:matchR[1][0]], 10, 64)
+		TeamNumber, err := strconv.ParseInt(parts[0], 10, 64)
 		if err != nil {
 			continue
 		}
 
 		// 檢查是否為目標球隊
 		if teamName, ok := matchMap[TeamNumber]; ok {
-			// 近5場過盤結果在第12-16個位置（index 11-15）
-			// "0" = 過盤（贏）, "1" = 沒過盤（輸）
+			// 近5場過盤結果在 index 12-16
+			// 資料格式: [TeamNum, ..., value12, value13, value14, value15, value16]
+			// "0" = 沒過盤（輸）, "2" = 過盤（贏）
 			spreads := make([]string, 5)
 
-			// 提取第5場（最新）
-			if len(matchR) > 15 {
-				five := winPercentData[matchR[15][0]+1 : matchR[15][1]+1]
-				if five == "0" {
-					spreads[4] = "W"
-				} else {
-					spreads[4] = "L"
-				}
-			}
-
-			// 提取第1-4場
-			for j := 0; j < 4 && (11+j) < len(matchR) && (12+j) < len(matchR); j++ {
-				spreadValue := winPercentData[matchR[11+j][0]+1 : matchR[12+j][1]-1]
-				if spreadValue == "0" {
+			for j := 0; j < 5; j++ {
+				spreadValue := parts[12+j]
+				if spreadValue == "2" {
 					spreads[j] = "W" // 過盤
 				} else {
-					spreads[j] = "L" // 沒過盤
+					spreads[j] = "L" // 沒過盤（0 或其他值）
 				}
 			}
 
